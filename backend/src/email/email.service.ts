@@ -13,8 +13,7 @@ export class EmailService {
     this.logger = new LoggerService('EmailService');
 
     const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
-    const secure = process.env.SMTP_SECURE === 'true';
+    const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
     const appName = process.env.APP_NAME || 'KanFlow';
@@ -25,7 +24,6 @@ export class EmailService {
       return;
     }
 
-    // Use Gmail service shorthand if host is Gmail — avoids Railway port-blocking issues
     const isGmail = host === 'smtp.gmail.com' || host === 'smtp.google.com';
 
     this.transporter = nodemailer.createTransport(
@@ -33,17 +31,20 @@ export class EmailService {
         ? {
             service: 'gmail',
             auth: { user, pass },
-            // Force TLS — required on cloud platforms like Railway
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
           }
         : {
             host,
             port,
-            secure: port === 465 ? true : secure,
+            secure: port === 465,
             auth: { user, pass },
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
-            // Fallback to port 465 if 587 is blocked
-            requireTLS: port === 587,
           },
     );
 

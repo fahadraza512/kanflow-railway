@@ -432,12 +432,10 @@ export class AuthService {
     user.verificationTokenExpires = verificationTokenExpires;
     await this.userRepository.save(user);
 
-    try {
-      await this.emailService.sendVerificationEmail(email, verificationToken);
-    } catch (error) {
+    // Fire and forget — don't block the response on SMTP
+    this.emailService.sendVerificationEmail(email, verificationToken).catch((error) => {
       console.log('Failed to send verification email:', error.message);
-      throw new BadRequestException('Failed to send verification email. Please check your email configuration.');
-    }
+    });
 
     return {
       message: 'Verification email sent successfully',
