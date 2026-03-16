@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Task } from './entities/task.entity';
@@ -11,6 +11,7 @@ import { BulkOperationDto } from './dto/bulk-operation.dto';
 import { BoardsService } from '../boards/boards.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
+import { PermissionsService } from '../common/permissions/permissions.service';
 
 @Injectable()
 export class TasksService {
@@ -25,11 +26,22 @@ export class TasksService {
     @Inject(forwardRef(() => NotificationsService))
     private notificationsService: NotificationsService,
     private activityService: ActivityService,
+    private permissionsService: PermissionsService,
   ) {}
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
     // Check board access
     await this.boardsService.findOne(createTaskDto.boardId, userId);
+
+    // Get workspaceId for permission check
+    const board = await this.boardRepository.findOne({
+      where: { id: createTaskDto.boardId },
+      relations: ['project'],
+    });
+    const workspaceId = board?.project?.workspaceId;
+    if (workspaceId) {
+      await this.permissionsService.requireRole(userId, workspaceId, 'member');
+    }
 
     // Check for duplicate task title in the same board (case-insensitive)
     // Check both active and archived tasks
@@ -216,6 +228,40 @@ export class TasksService {
     const task = await this.findOne(id, userId);
     const oldAssignee = task.assigneeId;
 
+    // Get workspaceId for permission check
+    const boardForPerm = await this.boardRepository.findOne({
+      where: { id: task.boardId },
+      relations: ['project'],
+    });
+    const workspaceIdForPerm = boardForPerm?.project?.workspaceId;
+    if (workspaceIdForPerm) {
+      const role = await this.permissionsService.getUserRole(userId, workspaceIdForPerm);
+      if (!role) throw new ForbiddenException('Access denied');
+
+      // Viewer cannot edit anything
+      if (role === 'viewer') {
+        throw new ForbiddenException('Viewers cannot edit tasks');
+      }
+
+      // Member can only edit their own tasks
+      if (role === 'member' && task.createdBy && task.createdBy !== userId) {
+        // Allow status/move updates for members even on others' tasks
+        const allowedFields = ['status', 'listId', 'order'];
+        const updatingFields = Object.keys(updateTaskDto);
+        const hasDisallowedFields = updatingFields.some(f => !allowedFields.includes(f));
+        if (hasDisallowedFields) {
+          throw new ForbiddenException('Members can only edit their own tasks or update task status');
+        }
+      }
+
+      // Only PM+ can assign tasks to others
+      if (updateTaskDto.assigneeId && updateTaskDto.assigneeId !== userId) {
+        if (!this.permissionsService.hasRole(role, 'pm')) {
+          throw new ForbiddenException('Only Project Managers and above can assign tasks to other members');
+        }
+      }
+    }
+
     console.log('[TasksService.update] Received updateTaskDto:', JSON.stringify(updateTaskDto));
     console.log('[TasksService.update] Current task.assigneeId:', task.assigneeId);
 
@@ -373,6 +419,19 @@ export class TasksService {
     await this.boardsService.findOne(task.boardId, userId);
 
     const workspaceId = task.board?.project?.workspaceId;
+
+    // Permission: member can delete own tasks, PM+ can delete any
+    if (workspaceId) {
+      const role = await this.permissionsService.getUserRole(userId, workspaceId);
+      if (!role || role === 'viewer') {
+        throw new ForbiddenException('You do not have permission to delete tasks');
+      }
+      if (role === 'member' && task.createdBy && task.createdBy !== userId) {
+        throw new ForbiddenException('Members can only delete their own tasks');
+      }
+    }
+
+    const workspaceId = task.board?.project?.workspaceId;
     const projectId = task.board?.projectId;
 
     // Log activity: Task deleted
@@ -431,6 +490,11 @@ export class TasksService {
     });
     
     const workspaceId = board?.project?.workspaceId;
+
+    // Permission: PM+ can archive any task
+    if (workspaceId) {
+      await this.permissionsService.requireRole(userId, workspaceId, 'pm');
+    }
     const projectId = board?.projectId;
 
     task.isArchived = true;
@@ -462,6 +526,16 @@ export class TasksService {
 
     // Check target board access
     await this.boardsService.findOne(moveTaskDto.targetBoardId, userId);
+
+    // Permission: member+ can move tasks
+    const board = await this.boardRepository.findOne({
+      where: { id: task.boardId },
+      relations: ['project'],
+    });
+    const workspaceId = board?.project?.workspaceId;
+    if (workspaceId) {
+      await this.permissionsService.requireRole(userId, workspaceId, 'member');
+    }
 
     // Get max order in target board
     const maxOrder = await this.taskRepository

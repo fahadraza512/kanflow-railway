@@ -89,9 +89,15 @@ export class InvitationsService {
       throw new NotFoundException('Workspace not found');
     }
 
-    // Verify inviter is workspace owner
-    if (workspace.ownerId !== inviterId) {
-      throw new ForbiddenException('Only workspace owner can invite members');
+    // Verify inviter is workspace owner or admin
+    const inviterMember = await this.workspaceMemberRepository.findOne({
+      where: { workspaceId, userId: inviterId },
+    });
+    const isOwner = workspace.ownerId === inviterId;
+    const isAdmin = inviterMember?.role === WorkspaceMemberRole.ADMIN;
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Only workspace owners and admins can invite members');
     }
 
     // Get inviter user to check email

@@ -17,10 +17,12 @@ import TaskDetailPanel from "@/components/task/TaskDetailPanel";
 import AdvancedFilters, { FilterOptions, applyFilters } from "@/components/board/AdvancedFilters";
 import { Task } from "@/types/api.types";
 import { BoardColumnSkeleton } from "@/components/ui/LoadingSkeleton";
+import { useWorkspaceRole } from "@/hooks/useWorkspaceRole";
 
 export default function BoardPage() {
     const { workspaceId, projectId, boardId } = useParams();
     const router = useRouter();
+    const { isViewer, canCreateTask } = useWorkspaceRole();
     
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -407,7 +409,7 @@ export default function BoardPage() {
                             setSelectedTask(null);
                         }}
                         onUpdate={handleTaskUpdate}
-                        readOnly={false}
+                        readOnly={isViewer}
                         onNext={canNavigateNext ? handleNextTask : undefined}
                         onPrevious={canNavigatePrevious ? handlePreviousTask : undefined}
                         lists={lists}

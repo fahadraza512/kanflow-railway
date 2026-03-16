@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Board } from './entities/board.entity';
@@ -9,6 +9,7 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { ReorderBoardsDto } from './dto/reorder-boards.dto';
 import { ProjectsService } from '../projects/projects.service';
 import { ListsService } from '../lists/lists.service';
+import { PermissionsService } from '../common/permissions/permissions.service';
 
 @Injectable()
 export class BoardsService {
@@ -21,11 +22,15 @@ export class BoardsService {
     private taskRepository: Repository<Task>,
     private projectsService: ProjectsService,
     private listsService: ListsService,
+    private permissionsService: PermissionsService,
   ) {}
 
   async create(createBoardDto: CreateBoardDto, userId: string) {
     // Check project access
-    await this.projectsService.findOne(createBoardDto.projectId, userId);
+    const project = await this.projectsService.findOne(createBoardDto.projectId, userId);
+
+    // Permission: PM+ can create boards
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
 
     // Check for duplicate name in the same project (case-insensitive)
     // Check both active and archived boards
@@ -115,6 +120,10 @@ export class BoardsService {
   async update(id: string, updateBoardDto: UpdateBoardDto, userId: string) {
     const board = await this.findOne(id, userId);
 
+    // Permission: PM+ can update boards
+    const project = await this.projectsService.findOne(board.projectId, userId);
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
+
     // Check for duplicate name if name is being updated (case-insensitive)
     // Check both active and archived boards
     if (updateBoardDto.name && updateBoardDto.name.toLowerCase() !== board.name.toLowerCase()) {
@@ -140,6 +149,10 @@ export class BoardsService {
   async remove(id: string, userId: string) {
     const board = await this.findOne(id, userId);
 
+    // Permission: PM+ can delete boards
+    const project = await this.projectsService.findOne(board.projectId, userId);
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
+
     // Delete all related data in correct order to avoid foreign key constraints
     
     // 1. Delete all tasks in this board
@@ -157,6 +170,10 @@ export class BoardsService {
   async archive(id: string, userId: string) {
     const board = await this.findOne(id, userId);
 
+    // Permission: PM+ can archive boards
+    const project = await this.projectsService.findOne(board.projectId, userId);
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
+
     board.isArchived = true;
     return this.boardRepository.save(board);
   }
@@ -164,13 +181,20 @@ export class BoardsService {
   async restore(id: string, userId: string) {
     const board = await this.findOne(id, userId);
 
+    // Permission: PM+ can restore boards
+    const project = await this.projectsService.findOne(board.projectId, userId);
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
+
     board.isArchived = false;
     return this.boardRepository.save(board);
   }
 
   async reorder(projectId: string, reorderBoardsDto: ReorderBoardsDto, userId: string) {
     // Check project access
-    await this.projectsService.findOne(projectId, userId);
+    const project = await this.projectsService.findOne(projectId, userId);
+
+    // Permission: PM+ can reorder boards
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
 
     // Update order for each board
     const updatePromises = reorderBoardsDto.boardIds.map((boardId, index) =>

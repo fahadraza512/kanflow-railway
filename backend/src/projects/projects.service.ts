@@ -11,6 +11,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { WorkspacesService } from '../workspaces/workspaces.service';
+import { PermissionsService } from '../common/permissions/permissions.service';
 
 @Injectable()
 export class ProjectsService {
@@ -28,9 +29,12 @@ export class ProjectsService {
     @InjectRepository(WorkspaceMember)
     private workspaceMemberRepository: Repository<WorkspaceMember>,
     private workspacesService: WorkspacesService,
+    private permissionsService: PermissionsService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto, userId: string) {
+    // Permission: PM+ can create projects
+    await this.permissionsService.requireRole(userId, createProjectDto.workspaceId, 'pm');
     // Check for duplicate name in the same workspace (case-insensitive)
     // Check both active and archived projects
     const existingProject = await this.projectRepository
@@ -200,8 +204,9 @@ export class ProjectsService {
     }
 
     await this.ensureAccess(id, userId, project.workspace);
-    // Temporarily skip admin check - allow all users
-    // await this.checkAdminAccess(id, userId);
+
+    // Permission: PM+ can update projects
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
 
     // Check for duplicate name if name is being updated (case-insensitive)
     // Check both active and archived projects
@@ -236,8 +241,9 @@ export class ProjectsService {
     }
 
     await this.ensureAccess(id, userId, project.workspace);
-    // Temporarily skip admin check - allow all users
-    // await this.checkAdminAccess(id, userId);
+
+    // Permission: PM+ can delete projects
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
 
     // Delete all related data in correct order to avoid foreign key constraints
     
@@ -278,8 +284,9 @@ export class ProjectsService {
     }
 
     await this.ensureAccess(id, userId, project.workspace);
-    // Temporarily skip admin check - allow all users
-    // await this.checkAdminAccess(id, userId);
+
+    // Permission: PM+ can archive projects
+    await this.permissionsService.requireRole(userId, project.workspaceId, 'pm');
 
     project.isArchived = true;
     await this.projectRepository.save(project);

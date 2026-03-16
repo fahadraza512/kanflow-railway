@@ -7,12 +7,14 @@ import { List } from '../lists/entities/list.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { ProjectsModule } from '../projects/projects.module';
 import { ListsModule } from '../lists/lists.module';
+import { PermissionsModule } from '../common/permissions/permissions.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Board, List, Task]),
     ProjectsModule,
-    ListsModule
+    ListsModule,
+    PermissionsModule,
   ],
   controllers: [BoardsController],
   providers: [BoardsService],

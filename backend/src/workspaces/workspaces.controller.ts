@@ -120,6 +120,14 @@ export class WorkspacesController {
     return this.workspacesService.removeMember(id, memberUserId, user.userId);
   }
 
+  @Post(':id/leave')
+  leaveWorkspace(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.workspacesService.leaveWorkspace(id, user.userId);
+  }
+
   @Post(':id/members')
   addMember(
     @Param('id') id: string,

@@ -9,11 +9,13 @@ import { List } from '../lists/entities/list.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { WorkspaceMember } from '../workspaces/entities/workspace-member.entity';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
+import { PermissionsModule } from '../common/permissions/permissions.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Project, ProjectMember, Board, List, Task, WorkspaceMember]),
     WorkspacesModule,
+    PermissionsModule,
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

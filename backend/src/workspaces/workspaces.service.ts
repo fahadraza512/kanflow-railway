@@ -311,12 +311,18 @@ export class WorkspacesService {
   async updateMemberRole(workspaceId: string, memberUserId: string, role: string, userId: string) {
     const workspace = await this.findOne(workspaceId, userId);
 
+    // Only owner can change roles
     if (workspace.ownerId !== userId) {
-      throw new NotFoundException('Only workspace owner can update member roles');
+      throw new ForbiddenException('Only workspace owner can update member roles');
     }
 
     if (memberUserId === workspace.ownerId) {
       throw new ConflictException('Cannot change owner role');
+    }
+
+    // Cannot promote to owner
+    if (role === WorkspaceMemberRole.OWNER) {
+      throw new BadRequestException('Cannot promote a member to Owner');
     }
 
     await this.workspaceMemberRepository
@@ -371,8 +377,15 @@ export class WorkspacesService {
   async removeMember(workspaceId: string, memberUserId: string, userId: string) {
     const workspace = await this.findOne(workspaceId, userId);
 
-    if (workspace.ownerId !== userId) {
-      throw new NotFoundException('Only workspace owner can remove members');
+    // Admin+ can remove members (but not the owner)
+    const requestingMember = await this.workspaceMemberRepository.findOne({
+      where: { workspaceId, userId },
+    });
+    const isOwner = workspace.ownerId === userId;
+    const isAdmin = requestingMember?.role === WorkspaceMemberRole.ADMIN;
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Only workspace owner or admins can remove members');
     }
 
     if (memberUserId === workspace.ownerId) {
@@ -402,6 +415,33 @@ export class WorkspacesService {
       .execute();
 
     return { message: 'Member removed successfully' };
+  }
+
+  async leaveWorkspace(workspaceId: string, userId: string) {
+    const workspace = await this.workspaceRepository.findOne({ where: { id: workspaceId } });
+    if (!workspace) throw new NotFoundException('Workspace not found');
+
+    if (workspace.ownerId === userId) {
+      throw new BadRequestException('Workspace owner cannot leave. Transfer ownership or delete the workspace.');
+    }
+
+    await this.workspaceMemberRepository.delete({ workspaceId, userId });
+    await this.projectMemberRepository
+      .createQueryBuilder()
+      .delete()
+      .where('userId = :userId', { userId })
+      .andWhere('projectId IN (SELECT id FROM projects WHERE "workspaceId" = :workspaceId)', { workspaceId })
+      .execute();
+
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({ activeWorkspaceId: null as any })
+      .where('id = :userId', { userId })
+      .andWhere('activeWorkspaceId = :workspaceId', { workspaceId })
+      .execute();
+
+    return { message: 'You have left the workspace' };
   }
 
   async addMember(workspaceId: string, emailOrUserId: string, role: WorkspaceMemberRole, requestingUserId: string) {

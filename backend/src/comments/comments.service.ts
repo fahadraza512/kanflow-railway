@@ -8,6 +8,8 @@ import { TasksService } from '../tasks/tasks.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { User } from '../auth/entities/user.entity';
 import { Task } from '../tasks/entities/task.entity';
+import { Board } from '../boards/entities/board.entity';
+import { PermissionsService } from '../common/permissions/permissions.service';
 
 @Injectable()
 export class CommentsService {
@@ -18,13 +20,19 @@ export class CommentsService {
     private userRepository: Repository<User>,
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
+    @InjectRepository(Board)
+    private boardRepository: Repository<Board>,
     private tasksService: TasksService,
     private notificationsService: NotificationsService,
+    private permissionsService: PermissionsService,
   ) {}
 
   async create(createCommentDto: CreateCommentDto, userId: string) {
     // Verify user has access to the task
     await this.tasksService.findOne(createCommentDto.taskId, userId);
+
+    // All roles (including viewer) can add comments
+    // No additional role check needed here
 
     const comment = this.commentRepository.create({
       ...createCommentDto,
@@ -142,9 +150,20 @@ export class CommentsService {
   async remove(id: string, userId: string) {
     const comment = await this.findOne(id, userId);
 
-    // Only the comment author can delete it
+    // Get workspaceId to check if user is PM+
+    const task = await this.taskRepository.findOne({
+      where: { id: comment.taskId },
+      relations: ['board', 'board.project'],
+    });
+    const workspaceId = task?.board?.project?.workspaceId;
+
+    // PM+ can delete any comment; others can only delete their own
     if (comment.userId !== userId) {
-      throw new ForbiddenException('You can only delete your own comments');
+      if (workspaceId) {
+        await this.permissionsService.requireRole(userId, workspaceId, 'pm');
+      } else {
+        throw new ForbiddenException('You can only delete your own comments');
+      }
     }
 
     await this.commentRepository.remove(comment);

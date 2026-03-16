@@ -8,6 +8,7 @@ import { Board } from '../boards/entities/board.entity';
 import { BoardsModule } from '../boards/boards.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
+import { PermissionsModule } from '../common/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ActivityModule } from '../activity/activity.module';
     BoardsModule,
     forwardRef(() => NotificationsModule),
     ActivityModule,
+    PermissionsModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],

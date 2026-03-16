@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useWorkspaceMembers } from "@/hooks/api/useWorkspaceMembers";
 import { useUpdateMemberRole, useRemoveWorkspaceMember } from "@/hooks/api/useWorkspaces";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
+import { useWorkspaceRole } from "@/hooks/useWorkspaceRole";
 import { showToast } from "@/lib/toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Building2, X, Mail, Search, MoreVertical } from "lucide-react";
@@ -25,6 +26,7 @@ export default function MembersPage() {
 function MembersPageContent() {
     const { activeWorkspace } = useWorkspaceStore();
     const { user } = useAuthStore();
+    const { isOwner, isAdmin, canInviteMembers, canRemoveMembers, canChangeRoles } = useWorkspaceRole();
     const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
     const [invitationRefreshKey, setInvitationRefreshKey] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
@@ -54,9 +56,7 @@ function MembersPageContent() {
     useHeartbeat(activeWorkspace?.id || null, !!activeWorkspace?.id);
 
     // Check if user is workspace owner
-    const isWorkspaceOwner = activeWorkspace && user 
-        ? String(activeWorkspace.ownerId) === String(user.id)
-        : false;
+    const isWorkspaceOwner = isOwner;
 
     const formatRole = (role: string) => {
         if (role === 'pm') return 'Project Manager';
@@ -233,8 +233,8 @@ function MembersPageContent() {
                                             onClick={() => setIsInviteMemberModalOpen(true)}
                                             variant="primary"
                                             size="sm"
-                                            disabled={!isWorkspaceOwner}
-                                            title={!isWorkspaceOwner ? "Only workspace owners can invite members" : "Invite member via email"}
+                                            disabled={!canInviteMembers}
+                                            title={!canInviteMembers ? "Only workspace owners and admins can invite members" : "Invite member via email"}
                                             className="flex-1 sm:flex-initial"
                                         >
                                             <Mail className="w-4 h-4 mr-2" />
@@ -325,6 +325,7 @@ function MembersPageContent() {
                                                         </td>
                                                     )}
                                                     <td className="py-4 px-6 text-right">
+                                                        {(canChangeRoles || canRemoveMembers) && (
                                                         <button
                                                             onClick={(e) => handleOpenDropdown(member.id, e)}
                                                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -332,6 +333,7 @@ function MembersPageContent() {
                                                         >
                                                             <MoreVertical className="w-4 h-4 text-gray-400" />
                                                         </button>
+                                                        )}
                                                         
                                                         {openDropdownId === member.id && dropdownPosition && (
                                                             <>
@@ -346,6 +348,7 @@ function MembersPageContent() {
                                                                         right: `${dropdownPosition.right}px`
                                                                     }}
                                                                 >
+                                                                    {canChangeRoles && (
                                                                     <button
                                                                         onClick={() => handleChangeRole(member)}
                                                                         className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -355,6 +358,8 @@ function MembersPageContent() {
                                                                         </svg>
                                                                         Change Role
                                                                     </button>
+                                                                    )}
+                                                                    {canRemoveMembers && (
                                                                     <button
                                                                         onClick={() => handleRemoveMember(member)}
                                                                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
@@ -364,6 +369,7 @@ function MembersPageContent() {
                                                                         </svg>
                                                                         Remove Member
                                                                     </button>
+                                                                    )}
                                                                 </div>
                                                             </>
                                                         )}
@@ -377,7 +383,7 @@ function MembersPageContent() {
                         </div>
 
                         {/* Invitation List */}
-                        {FEATURES.invitations && isWorkspaceOwner && (
+                        {FEATURES.invitations && canInviteMembers && (
                             <div className="mt-8">
                                 <div className="mb-4">
                                     <h2 className="text-xl font-bold text-gray-900 mb-2">Pending Invitations</h2>
