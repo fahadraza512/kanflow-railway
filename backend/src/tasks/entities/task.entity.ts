@@ -37,6 +37,9 @@ export class Task {
   list: List;
 
   @Column({ type: 'uuid', nullable: true })
+  createdById: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
   assigneeId: string | null;
 
   @ManyToOne(() => User, { nullable: true })

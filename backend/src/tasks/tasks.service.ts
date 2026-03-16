@@ -33,12 +33,14 @@ export class TasksService {
     // Check board access
     await this.boardsService.findOne(createTaskDto.boardId, userId);
 
-    // Get workspaceId for permission check
+    // Get board with workspace info for permission check + activity logging
     const board = await this.boardRepository.findOne({
       where: { id: createTaskDto.boardId },
       relations: ['project'],
     });
     const workspaceId = board?.project?.workspaceId;
+    const projectId = board?.projectId;
+
     if (workspaceId) {
       await this.permissionsService.requireRole(userId, workspaceId, 'member');
     }
@@ -67,19 +69,11 @@ export class TasksService {
 
     const task = this.taskRepository.create({
       ...createTaskDto,
+      createdById: userId,
       order: (maxOrder?.max || 0) + 1,
     });
 
     const savedTask = await this.taskRepository.save(task);
-
-    // Get board with workspace and project info for notifications and activity
-    const board = await this.boardRepository.findOne({
-      where: { id: savedTask.boardId },
-      relations: ['project'],
-    });
-    
-    const workspaceId = board?.project?.workspaceId;
-    const projectId = board?.projectId;
 
     // Log activity: Task created
     try {
@@ -244,7 +238,7 @@ export class TasksService {
       }
 
       // Member can only edit their own tasks
-      if (role === 'member' && task.createdBy && task.createdBy !== userId) {
+      if (role === 'member' && task.createdById && task.createdById !== userId) {
         // Allow status/move updates for members even on others' tasks
         const allowedFields = ['status', 'listId', 'order'];
         const updatingFields = Object.keys(updateTaskDto);
@@ -419,6 +413,7 @@ export class TasksService {
     await this.boardsService.findOne(task.boardId, userId);
 
     const workspaceId = task.board?.project?.workspaceId;
+    const projectId = task.board?.projectId;
 
     // Permission: member can delete own tasks, PM+ can delete any
     if (workspaceId) {
@@ -426,13 +421,10 @@ export class TasksService {
       if (!role || role === 'viewer') {
         throw new ForbiddenException('You do not have permission to delete tasks');
       }
-      if (role === 'member' && task.createdBy && task.createdBy !== userId) {
+      if (role === 'member' && task.createdById && task.createdById !== userId) {
         throw new ForbiddenException('Members can only delete their own tasks');
       }
     }
-
-    const workspaceId = task.board?.project?.workspaceId;
-    const projectId = task.board?.projectId;
 
     // Log activity: Task deleted
     try {
