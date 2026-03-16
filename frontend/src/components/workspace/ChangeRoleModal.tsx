@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { WorkspaceMember } from '@/services/api/workspace-member.service';
@@ -36,6 +36,13 @@ const roles = [
 
 export function ChangeRoleModal({ isOpen, onClose, member, onConfirm, isLoading }: ChangeRoleModalProps) {
     const [selectedRole, setSelectedRole] = useState(member?.role || 'member');
+
+    // Reset selected role whenever the modal opens with a new member
+    useEffect(() => {
+        if (isOpen && member) {
+            setSelectedRole(member.role || 'member');
+        }
+    }, [isOpen, member]);
 
     if (!isOpen || !member) return null;
 
