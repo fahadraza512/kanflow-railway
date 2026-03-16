@@ -18,6 +18,7 @@ import { Task } from '../tasks/entities/task.entity';
 import { List } from '../lists/entities/list.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { Preference } from '../preferences/entities/preference.entity';
+import { Activity } from '../activity/entities/activity.entity';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Preference } from '../preferences/entities/preference.entity';
       List,
       Notification,
       Preference,
+      Activity,
     ]),
     PassportModule,
     JwtModule.registerAsync({

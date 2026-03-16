@@ -20,6 +20,7 @@ import { Task } from '../tasks/entities/task.entity';
 import { List } from '../lists/entities/list.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { Preference } from '../preferences/entities/preference.entity';
+import { Activity } from '../activity/entities/activity.entity';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +45,8 @@ export class AuthService {
     private notificationRepository: Repository<Notification>,
     @InjectRepository(Preference)
     private preferenceRepository: Repository<Preference>,
+    @InjectRepository(Activity)
+    private activityRepository: Repository<Activity>,
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
@@ -655,6 +658,9 @@ export class AuthService {
 
     // Delete all workspaces owned by the user
     await this.workspaceRepository.delete({ ownerId: userId });
+
+    // Delete user's activities
+    await this.activityRepository.delete({ userId });
 
     // Delete user's notifications
     await this.notificationRepository.delete({ userId });
