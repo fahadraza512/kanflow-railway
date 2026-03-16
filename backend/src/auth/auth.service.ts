@@ -414,6 +414,7 @@ export class AuthService {
     };
   }
 
+  // Resend verification email - recreates user if deleted by cleanup
   async resendVerification(email: string, firstName?: string, lastName?: string, password?: string) {
     const user = await this.userRepository.findOne({ where: { email } });
 
