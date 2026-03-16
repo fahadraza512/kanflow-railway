@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { LoggerService } from '../common/logger/logger.service';
 
 @Injectable()
@@ -39,7 +40,7 @@ export class EmailService {
             tls: { rejectUnauthorized: false },
             // Force IPv4 — Railway doesn't support IPv6 outbound
             family: 4,
-          }
+          } as SMTPTransport.Options
         : {
             host,
             port,
@@ -50,7 +51,7 @@ export class EmailService {
             socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
             family: 4,
-          },
+          } as SMTPTransport.Options,
     );
 
     this.isConfigured = true;
