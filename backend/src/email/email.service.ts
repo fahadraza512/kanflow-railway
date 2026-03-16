@@ -35,6 +35,8 @@ export class EmailService {
             greetingTimeout: 10000,
             socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
+            // Force IPv4 — Railway Asia region doesn't support IPv6 outbound
+            family: 4,
           }
         : {
             host,
@@ -45,6 +47,7 @@ export class EmailService {
             greetingTimeout: 10000,
             socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
+            family: 4,
           },
     );
 
