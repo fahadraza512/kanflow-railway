@@ -1,51 +1,64 @@
 import { Injectable } from '@nestjs/common';
-import { Resend } from 'resend';
+import { BrevoClient } from '@getbrevo/brevo';
 import { LoggerService } from '../common/logger/logger.service';
 
 @Injectable()
 export class EmailService {
-  private resend: Resend | null = null;
+  private client: BrevoClient | null = null;
   private isConfigured: boolean = false;
   private logger: LoggerService;
   private fromAddress: string;
+  private fromName: string;
 
   constructor() {
     this.logger = new LoggerService('EmailService');
 
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.BREVO_API_KEY;
     const appName = process.env.APP_NAME || 'KanFlow';
-    this.fromAddress = process.env.EMAIL_FROM || `${appName} <onboarding@resend.dev>`;
+    const emailFrom = process.env.EMAIL_FROM || `${appName} <fahadraza6512@gmail.com>`;
+    
+    // Parse email address and name
+    const emailMatch = emailFrom.match(/^(.+?)\s*<(.+?)>$/);
+    if (emailMatch) {
+      this.fromName = emailMatch[1].trim();
+      this.fromAddress = emailMatch[2].trim();
+    } else {
+      this.fromName = appName;
+      this.fromAddress = emailFrom;
+    }
 
     if (!apiKey) {
-      this.logger.logWarning('RESEND_API_KEY not configured. Email sending will be disabled.');
+      this.logger.logWarning('BREVO_API_KEY not configured. Email sending will be disabled.');
       return;
     }
 
-    this.resend = new Resend(apiKey);
+    // Initialize Brevo client
+    this.client = new BrevoClient({ apiKey });
     this.isConfigured = true;
-    this.logger.logSuccess('Email service initialized (Resend API)');
-    this.logger.log(`   From: ${this.fromAddress}`);
+    
+    this.logger.logSuccess('Email service initialized (Brevo API)');
+    this.logger.log(`   From: ${this.fromName} <${this.fromAddress}>`);
   }
 
   async sendEmail(to: string, subject: string, html: string, text?: string) {
-    if (!this.isConfigured || !this.resend) {
-      this.logger.logWarning(`Email not sent to ${to} - Resend not configured`);
-      return { success: false, reason: 'Resend not configured' };
+    if (!this.isConfigured || !this.client) {
+      this.logger.logWarning(`Email not sent to ${to} - Brevo not configured`);
+      return { success: false, reason: 'Brevo not configured' };
     }
 
     try {
       this.logger.log(`📧 Sending email to ${to} with subject: "${subject}"`);
       
-      const result = await this.resend.emails.send({
-        from: this.fromAddress,
-        to,
+      const result = await this.client.transactionalEmails.sendTransacEmail({
+        sender: { name: this.fromName, email: this.fromAddress },
+        to: [{ email: to }],
         subject,
-        html,
-        text: text || html.replace(/<[^>]*>/g, ''),
+        htmlContent: html,
+        textContent: text || html.replace(/<[^>]*>/g, ''),
       });
-
-      this.logger.logSuccess(`Email sent to ${to} (ID: ${result.data?.id})`);
-      return { success: true, id: result.data?.id };
+      
+      this.logger.logSuccess(`Email sent to ${to} (Message ID: ${result.messageId})`);
+      return { success: true, messageId: result.messageId };
     } catch (error) {
       this.logger.logError(`Failed to send email to ${to}`, error);
       throw error;
