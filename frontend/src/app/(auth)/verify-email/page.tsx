@@ -30,11 +30,6 @@ export default function VerifyEmailPage() {
     const [hasEverSentEmail, setHasEverSentEmail] = useState(false);
     const [isLoadingEmail, setIsLoadingEmail] = useState(false);
 
-    return (
-        <>
-            <WebViewDetector showMessage={true} autoRedirect={false} />
-            {/* Rest of the component */}
-
     const emailRef = useRef(email);
     const hasVerified = useRef(false); // Prevent double-fire in React StrictMode
 
@@ -317,7 +312,9 @@ export default function VerifyEmailPage() {
     // If link is expired, show only the error message
     if (state === 'LINK_EXPIRED') {
         return (
-            <div className="text-center">
+            <>
+                <WebViewDetector showMessage={true} autoRedirect={false} />
+                <div className="text-center">
                 <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-50 mb-6">
                     <Mail className="h-7 w-7 text-red-600" />
                 </div>
@@ -331,11 +328,14 @@ export default function VerifyEmailPage() {
                     </p>
                 </div>
             </div>
+            </>
         );
     }
 
     return (
-        <div className="text-center">
+        <>
+            <WebViewDetector showMessage={true} autoRedirect={false} />
+            <div className="text-center">
             <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 mb-6">
                 <Mail className="h-7 w-7 text-blue-600" />
             </div>
@@ -492,5 +492,6 @@ export default function VerifyEmailPage() {
                 </button>
             </p>
         </div>
+        </>
     );
 }
