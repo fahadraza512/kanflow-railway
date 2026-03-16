@@ -42,7 +42,7 @@ export class Task {
   @Column({ type: 'uuid', nullable: true })
   assigneeId: string | null;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'assigneeId' })
   assignee: User | null;
 

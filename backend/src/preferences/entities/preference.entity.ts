@@ -17,7 +17,7 @@ export class Preference {
   @Column({ type: 'uuid', unique: true })
   userId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
