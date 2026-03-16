@@ -2,8 +2,8 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
 
 // API Configuration
-// In production, use the absolute API URL. In development, use the Next.js proxy.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+// Always use relative /api/v1 — Next.js rewrites proxy this to the backend.
+const API_BASE_URL = '/api/v1';
 const API_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance

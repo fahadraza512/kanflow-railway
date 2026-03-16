@@ -58,7 +58,7 @@ export default function VerifyEmailPage() {
                     setIsLoadingEmail(true);
                     console.log('Token present but no email, fetching from backend...');
                     try {
-                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/auth/email-from-token?token=${token}`);
+                        const response = await fetch(`/api/v1/auth/email-from-token?token=${token}`);
                         if (response.ok) {
                             const data = await response.json();
                             console.log('Email fetch response:', data);
@@ -222,7 +222,7 @@ export default function VerifyEmailPage() {
             console.log('No email available, fetching from token...');
             setIsLoadingEmail(true);
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/auth/email-from-token?token=${token}`);
+                const response = await fetch(`/api/v1/auth/email-from-token?token=${token}`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.email) {
@@ -446,7 +446,7 @@ export default function VerifyEmailPage() {
 
                         if (currentEmail) {
                             try {
-                                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/auth/cancel-unverified`, {
+                                const response = await fetch(`/api/v1/auth/cancel-unverified`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ email: currentEmail })

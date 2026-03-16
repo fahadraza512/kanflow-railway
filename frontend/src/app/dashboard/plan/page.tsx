@@ -224,7 +224,7 @@ export default function DashboardPlanPage() {
                 throw new Error('You are not logged in. Please log in and try again.');
             }
             
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/stripe/create-checkout-session-pending`, {
+            const response = await fetch(`/api/v1/stripe/create-checkout-session-pending`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

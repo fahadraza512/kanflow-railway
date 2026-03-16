@@ -59,7 +59,7 @@ function DummyCheckoutContent() {
             }
             
             // Call dummy webhook to process payment
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+            const apiUrl = '/api/v1';
             const response = await fetch(`${apiUrl}/stripe/dummy-webhook`, {
                 method: 'POST',
                 headers: {

@@ -128,7 +128,7 @@ function WorkspaceSettingsContent() {
 
             // Fetch all workspace data
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+            const apiUrl = '/api/v1';
             
             const [projectsRes, analyticsRes, boardsRes, tasksRes] = await Promise.all([
                 fetch(`${apiUrl}/projects?workspaceId=${activeWorkspace.id}`, {

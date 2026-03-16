@@ -75,7 +75,7 @@ export default function ContactSalesModal({ isOpen, onClose, onSuccess, workspac
         setIsSubmitting(true);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+            const apiUrl = '/api/v1';
             const response = await fetch(`${apiUrl}/sales/contact`, {
                 method: 'POST',
                 headers: {

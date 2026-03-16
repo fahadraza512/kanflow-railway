@@ -7,7 +7,7 @@
 export default function SocialLogin() {
     const handleGoogleLogin = () => {
         // Redirect to backend OAuth endpoint
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const apiUrl = '/api/v1';
         window.location.href = `${apiUrl}/auth/google`;
     };
 
