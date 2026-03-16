@@ -419,34 +419,39 @@ export class AuthService {
 
     if (!user) {
       // User was deleted by cleanup — recreate if we have registration data
-      if (firstName && lastName && password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationToken = uuidv4();
-        const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
-
-        const newUser = this.userRepository.create({
-          email,
-          firstName,
-          lastName,
-          password: hashedPassword,
-          verificationToken,
-          verificationTokenExpires,
-          provider: 'local',
-          emailVerified: false,
-        });
-        await this.userRepository.save(newUser);
-
-        this.emailService.sendVerificationEmail(email, verificationToken).catch((error) => {
-          console.log('Failed to send verification email:', error.message);
-        });
-
-        return { message: 'Verification email sent successfully', expiresIn: '1 minute' };
+      if (!firstName || !lastName || !password) {
+        // Missing required data to recreate account
+        throw new BadRequestException(
+          'Account not found. Please provide your registration details (firstName, lastName, password) to resend verification.'
+        );
       }
 
-      // No registration data — tell frontend to re-register
-      return {
-        message: 'Session expired. Please sign up again to get a new verification link.',
-        expired: true,
+      // Create fresh user record with new token
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const verificationToken = uuidv4();
+      const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
+
+      const newUser = this.userRepository.create({
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        verificationToken,
+        verificationTokenExpires,
+        provider: 'local',
+        emailVerified: false,
+      });
+      await this.userRepository.save(newUser);
+
+      // Fire and forget — don't block the response on SMTP
+      this.emailService.sendVerificationEmail(email, verificationToken).catch((error) => {
+        console.log('Failed to send verification email:', error.message);
+      });
+
+      return { 
+        message: 'Verification email sent successfully', 
+        expiresIn: '1 minute',
+        recreated: true 
       };
     }
 
