@@ -29,13 +29,15 @@ export class EmailService {
     this.transporter = nodemailer.createTransport(
       isGmail
         ? {
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
             auth: { user, pass },
             connectionTimeout: 10000,
             greetingTimeout: 10000,
             socketTimeout: 15000,
             tls: { rejectUnauthorized: false },
-            // Force IPv4 — Railway Asia region doesn't support IPv6 outbound
+            // Force IPv4 — Railway doesn't support IPv6 outbound
             family: 4,
           }
         : {
