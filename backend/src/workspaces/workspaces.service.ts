@@ -325,6 +325,10 @@ export class WorkspacesService {
       throw new BadRequestException('Cannot promote a member to Owner');
     }
 
+    // Capture old role BEFORE the update
+    const oldMember = await this.workspaceMemberRepository.findOne({ where: { workspaceId, userId: memberUserId } });
+    const oldRole = oldMember?.role || 'member';
+
     await this.workspaceMemberRepository
       .createQueryBuilder()
       .update()
@@ -352,12 +356,11 @@ export class WorkspacesService {
     try {
       const changerUser = await this.userRepository.findOne({ where: { id: userId } });
       const changerName = changerUser ? `${changerUser.firstName} ${changerUser.lastName}` : 'Workspace owner';
-      const oldMember = await this.workspaceMemberRepository.findOne({ where: { workspaceId, userId: memberUserId } });
       await this.notificationsService.notifyWorkspaceRoleChanged(
         memberUserId,
         changerName,
         workspace.name,
-        oldMember?.role || 'member',
+        oldRole,
         role,
         workspaceId,
       );
