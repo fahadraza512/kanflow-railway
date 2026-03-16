@@ -20,7 +20,7 @@ export class List {
   @Column({ type: 'uuid' })
   boardId: string;
 
-  @ManyToOne(() => Board)
+  @ManyToOne(() => Board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'boardId' })
   board: Board;
 

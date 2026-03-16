@@ -23,7 +23,7 @@ export class Project {
   @Column({ type: 'uuid' })
   workspaceId: string;
 
-  @ManyToOne(() => Workspace)
+  @ManyToOne(() => Workspace, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'workspaceId' })
   workspace: Workspace;
 

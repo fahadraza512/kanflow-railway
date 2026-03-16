@@ -25,14 +25,14 @@ export class Task {
   @Column({ type: 'uuid' })
   boardId: string;
 
-  @ManyToOne(() => Board)
+  @ManyToOne(() => Board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'boardId' })
   board: Board;
 
   @Column({ type: 'uuid', nullable: true })
   listId: string | null;
 
-  @ManyToOne(() => List, { nullable: true })
+  @ManyToOne(() => List, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'listId' })
   list: List;
 
