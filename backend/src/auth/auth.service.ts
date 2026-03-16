@@ -414,11 +414,40 @@ export class AuthService {
     };
   }
 
-  async resendVerification(email: string) {
+  async resendVerification(email: string, firstName?: string, lastName?: string, password?: string) {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      // User was deleted by cleanup — recreate if we have registration data
+      if (firstName && lastName && password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = uuidv4();
+        const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
+
+        const newUser = this.userRepository.create({
+          email,
+          firstName,
+          lastName,
+          password: hashedPassword,
+          verificationToken,
+          verificationTokenExpires,
+          provider: 'local',
+          emailVerified: false,
+        });
+        await this.userRepository.save(newUser);
+
+        this.emailService.sendVerificationEmail(email, verificationToken).catch((error) => {
+          console.log('Failed to send verification email:', error.message);
+        });
+
+        return { message: 'Verification email sent successfully', expiresIn: '1 minute' };
+      }
+
+      // No registration data — tell frontend to re-register
+      return {
+        message: 'Session expired. Please sign up again to get a new verification link.',
+        expired: true,
+      };
     }
 
     if (user.emailVerified) {

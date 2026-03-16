@@ -99,12 +99,28 @@ class AuthService {
     /**
      * Resend verification email
      */
-    async resendVerificationEmail(email: string, inviteToken?: string): Promise<void> {
+    async resendVerificationEmail(email: string, inviteToken?: string): Promise<{ expired?: boolean; message?: string }> {
         try {
-            await apiClient.post(`${this.endpoint}/resend-verification`, { 
+            // If user was deleted by cleanup, we may need to re-register them
+            let pendingData: any = null;
+            try {
+                const stored = sessionStorage.getItem('pendingRegistration');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.email === email) pendingData = parsed;
+                }
+            } catch {}
+
+            const response = await apiClient.post(`${this.endpoint}/resend-verification`, { 
                 email,
-                inviteToken 
+                inviteToken,
+                ...(pendingData ? {
+                    firstName: pendingData.firstName,
+                    lastName: pendingData.lastName,
+                    password: pendingData.password,
+                } : {}),
             });
+            return response.data?.data || response.data || {};
         } catch (error) {
             throw handleApiError(error);
         }

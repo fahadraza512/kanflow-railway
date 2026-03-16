@@ -85,10 +85,11 @@ export default function VerifyEmailPage() {
                     onSuccess: async (response) => {
                         setState('VERIFIED');
                         showToast.success("Account created successfully! Redirecting to login...");
-                        // Clear verification-related localStorage
+                        // Clear verification-related localStorage and sessionStorage
                         localStorage.removeItem(VERIFICATION_EMAIL_KEY);
                         localStorage.removeItem(VERIFICATION_EMAIL_ADDRESS_KEY);
                         localStorage.removeItem(HAS_SENT_EMAIL_KEY);
+                        sessionStorage.removeItem('pendingRegistration');
 
                         // Redirect to login — token will be returned by backend on login
                         const redirectUrl = searchParams?.get('redirect');
@@ -249,8 +250,17 @@ export default function VerifyEmailPage() {
         setError("");
         
         resendEmailMutation.mutate({ email: currentEmail, inviteToken }, {
-            onSuccess: () => {
+            onSuccess: (data: any) => {
                 console.log('✅ Email sent successfully, updating state...');
+
+                // If backend says session expired (user was deleted by cleanup), redirect to signup
+                if (data?.expired) {
+                    showToast.error("Session expired. Please sign up again.");
+                    setTimeout(() => {
+                        router.push('/signup');
+                    }, 1500);
+                    return;
+                }
                 
                 // CRITICAL: Update React state FIRST (synchronous)
                 setState('EMAIL_SENT');

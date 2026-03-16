@@ -172,9 +172,6 @@ export function useResendVerificationEmail() {
     return useMutation({
         mutationFn: ({ email, inviteToken }: { email: string; inviteToken?: string }) => 
             authService.resendVerificationEmail(email, inviteToken),
-        onSuccess: () => {
-            showToast.success('Verification email sent. Please check your inbox.');
-        },
         onError: (error: any) => {
             showApiError(error, 'Failed to send verification email');
         },

@@ -56,8 +56,13 @@ export class AuthController {
     return this.authService.verifyEmail(token);
   }
   @Post('resend-verification')
-  async resendVerification(@Body('email') email: string) {
-    return this.authService.resendVerification(email);
+  async resendVerification(
+    @Body('email') email: string,
+    @Body('firstName') firstName?: string,
+    @Body('lastName') lastName?: string,
+    @Body('password') password?: string,
+  ) {
+    return this.authService.resendVerification(email, firstName, lastName, password);
   }
 
   @Post('cancel-unverified')

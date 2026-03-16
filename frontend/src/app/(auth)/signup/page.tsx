@@ -136,6 +136,14 @@ export default function SignUpPage() {
         registerMutation.mutate({ data: formData as any, inviteToken: inviteToken || undefined }, {
             onSuccess: (response) => {
                 showToast.success("Account created! Click 'Send Verification Email' to continue.");
+                // Store registration data so resend can recreate the user if cleanup deleted them
+                sessionStorage.setItem('pendingRegistration', JSON.stringify({
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    password: formData.password,
+                    inviteToken: inviteToken || undefined,
+                }));
                 const verifyUrl = `/verify-email?email=${encodeURIComponent(response.user.email)}${
                     inviteToken ? `&inviteToken=${encodeURIComponent(inviteToken)}` : ''
                 }${
