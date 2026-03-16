@@ -9,6 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
         const isProd = configService.get('NODE_ENV') === 'production';
+        // Allow one-time sync via DB_SYNC=true env var (set to create tables, then remove)
+        const shouldSync = configService.get('DB_SYNC') === 'true' || !isProd;
 
         if (databaseUrl) {
           return {
@@ -16,7 +18,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             url: databaseUrl,
             ssl: isProd ? { rejectUnauthorized: false } : false,
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: !isProd,
+            synchronize: shouldSync,
             logging: !isProd,
           };
         }
@@ -29,7 +31,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           password: configService.get('DATABASE_PASSWORD'),
           database: configService.get('DATABASE_NAME'),
           entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-          synchronize: !isProd,
+          synchronize: shouldSync,
           logging: !isProd,
         };
       },
