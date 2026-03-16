@@ -112,7 +112,7 @@ class WorkspaceService extends BaseService<Workspace> {
         role: UserRole
     ): Promise<WorkspaceMember> {
         try {
-            const response = await apiClient.put<ApiResponse<WorkspaceMember>>(
+            const response = await apiClient.patch<ApiResponse<WorkspaceMember>>(
                 `${this.endpoint}/${workspaceId}/members/${userId}`,
                 { role }
             );

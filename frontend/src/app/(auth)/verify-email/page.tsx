@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { useVerifyEmail, useResendVerificationEmail } from "@/hooks/api";
 import { showToast } from "@/lib/toast";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { WebViewDetector } from "@/components/WebViewDetector";
 
 // 4 UI States
 type VerifyEmailState = 'EMAIL_SENT' | 'CAN_RESEND' | 'LINK_EXPIRED' | 'VERIFIED' | 'FIRST_VISIT';
@@ -28,6 +29,11 @@ export default function VerifyEmailPage() {
     const [error, setError] = useState("");
     const [hasEverSentEmail, setHasEverSentEmail] = useState(false);
     const [isLoadingEmail, setIsLoadingEmail] = useState(false);
+
+    return (
+        <>
+            <WebViewDetector showMessage={true} autoRedirect={false} />
+            {/* Rest of the component */}
 
     const emailRef = useRef(email);
     const hasVerified = useRef(false); // Prevent double-fire in React StrictMode
