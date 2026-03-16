@@ -1,8 +1,9 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, LessThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from './entities/user.entity';
@@ -72,7 +73,7 @@ export class AuthService {
           // Recent unverified account - update it with new data
           const hashedPassword = await bcrypt.hash(registerDto.password, 10);
           const verificationToken = uuidv4();
-          const verificationTokenExpires = new Date(Date.now() + 86400000); // 24 hours
+          const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
 
           existingUser.firstName = registerDto.firstName;
           existingUser.lastName = registerDto.lastName;
@@ -121,7 +122,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const verificationToken = uuidv4();
-    const verificationTokenExpires = new Date(Date.now() + 86400000); // 24 hours
+    const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
 
     const user = this.userRepository.create({
       ...registerDto,
@@ -426,7 +427,7 @@ export class AuthService {
 
     // Generate new token and expiration (invalidates old token)
     const verificationToken = uuidv4();
-    const verificationTokenExpires = new Date(Date.now() + 86400000); // 24 hours
+    const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
 
     user.verificationToken = verificationToken;
     user.verificationTokenExpires = verificationTokenExpires;
@@ -514,19 +515,17 @@ export class AuthService {
     };
   }
 
+  @Cron(CronExpression.EVERY_MINUTE)
   async cleanupUnverifiedAccounts() {
-    // Delete unverified accounts older than 24 hours
-    const oneDayAgo = new Date(Date.now() - 86400000);
+    // Delete unverified accounts whose verification token has expired
+    const result = await this.userRepository.delete({
+      emailVerified: false,
+      verificationTokenExpires: LessThan(new Date()),
+    });
 
-    const result = await this.userRepository
-      .createQueryBuilder()
-      .delete()
-      .from(User)
-      .where('emailVerified = :verified', { verified: false })
-      .andWhere('createdAt < :date', { date: oneDayAgo })
-      .execute();
-
-    console.log(`Cleaned up ${result.affected} unverified accounts older than 24 hours`);
+    if (result.affected && result.affected > 0) {
+      console.log(`Cleaned up ${result.affected} expired unverified account(s)`);
+    }
     return { deleted: result.affected };
   }
 
