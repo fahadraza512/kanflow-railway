@@ -26,7 +26,7 @@ export class Workspace {
   @Column({ type: 'uuid' })
   ownerId: string;
 
-  @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
+  @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'ownerId' })
   owner: User;
 
