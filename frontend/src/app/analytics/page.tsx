@@ -37,6 +37,19 @@ export default function AnalyticsPage() {
         useApiBackend ? activeWorkspace?.id?.toString() : undefined,
         { timeRange }
     );
+
+    // Debug logging
+    if (typeof window !== 'undefined') {
+        console.log('[Analytics Debug]', {
+            useApiBackend,
+            activeWorkspaceId: activeWorkspace?.id,
+            workspaceIdString: activeWorkspace?.id?.toString(),
+            isLoading: apiLoading,
+            hasData: !!apiAnalytics,
+            error: apiError,
+            data: apiAnalytics
+        });
+    }
     
     // Fallback to old localStorage implementation
     const { analytics: localAnalytics, handleExportData: handleExportLocal } = useAnalyticsOld(timeRange);
