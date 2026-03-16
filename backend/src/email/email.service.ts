@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { Resend } from 'resend';
 import { LoggerService } from '../common/logger/logger.service';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
   private isConfigured: boolean = false;
   private logger: LoggerService;
   private fromAddress: string;
@@ -13,69 +12,40 @@ export class EmailService {
   constructor() {
     this.logger = new LoggerService('EmailService');
 
-    const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '465', 10);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const apiKey = process.env.RESEND_API_KEY;
     const appName = process.env.APP_NAME || 'KanFlow';
-    this.fromAddress = process.env.EMAIL_FROM || `${appName} <${user}>`;
+    this.fromAddress = process.env.EMAIL_FROM || `${appName} <onboarding@resend.dev>`;
 
-    if (!host || !user || !pass) {
-      this.logger.logWarning('SMTP config incomplete. Email sending will be disabled.');
+    if (!apiKey) {
+      this.logger.logWarning('RESEND_API_KEY not configured. Email sending will be disabled.');
       return;
     }
 
-    const isGmail = host === 'smtp.gmail.com' || host === 'smtp.google.com';
-
-    this.transporter = nodemailer.createTransport(
-      isGmail
-        ? {
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
-            auth: { user, pass },
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 15000,
-            tls: { rejectUnauthorized: false },
-            // Force IPv4 — Railway doesn't support IPv6 outbound
-            family: 4,
-          } as SMTPTransport.Options
-        : {
-            host,
-            port,
-            secure: port === 465,
-            auth: { user, pass },
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 15000,
-            tls: { rejectUnauthorized: false },
-            family: 4,
-          } as SMTPTransport.Options,
-    );
-
+    this.resend = new Resend(apiKey);
     this.isConfigured = true;
-    this.logger.logSuccess('Email service initialized (SMTP/Nodemailer)');
+    this.logger.logSuccess('Email service initialized (Resend API)');
     this.logger.log(`   From: ${this.fromAddress}`);
   }
 
   async sendEmail(to: string, subject: string, html: string, text?: string) {
-    if (!this.isConfigured || !this.transporter) {
-      this.logger.logWarning(`Email not sent to ${to} - SMTP not configured`);
-      return { success: false, reason: 'SMTP not configured' };
+    if (!this.isConfigured || !this.resend) {
+      this.logger.logWarning(`Email not sent to ${to} - Resend not configured`);
+      return { success: false, reason: 'Resend not configured' };
     }
 
     try {
       this.logger.log(`📧 Sending email to ${to} with subject: "${subject}"`);
-      await this.transporter.sendMail({
+      
+      const result = await this.resend.emails.send({
         from: this.fromAddress,
         to,
         subject,
         html,
         text: text || html.replace(/<[^>]*>/g, ''),
       });
-      this.logger.logSuccess(`Email sent to ${to}`);
-      return { success: true };
+
+      this.logger.logSuccess(`Email sent to ${to} (ID: ${result.data?.id})`);
+      return { success: true, id: result.data?.id };
     } catch (error) {
       this.logger.logError(`Failed to send email to ${to}`, error);
       throw error;
@@ -85,21 +55,6 @@ export class EmailService {
   async send(options: { to: string; subject: string; html?: string; text?: string }) {
     if (!options.html) throw new Error('html must be provided');
     return this.sendEmail(options.to, options.subject, options.html, options.text);
-  }
-
-  async testConnection() {
-    if (!this.isConfigured || !this.transporter) {
-      this.logger.logWarning('Email service not configured');
-      return false;
-    }
-    try {
-      await this.transporter.verify();
-      this.logger.logSuccess('SMTP connection verified');
-      return true;
-    } catch (error) {
-      this.logger.logError('SMTP connection failed', error);
-      return false;
-    }
   }
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
