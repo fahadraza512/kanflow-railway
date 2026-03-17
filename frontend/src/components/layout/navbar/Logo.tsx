@@ -8,19 +8,19 @@ interface LogoProps {
 }
 
 const sizes = {
-    sm: { icon: "w-8 h-8 text-lg",  text: "text-xl" },
-    md: { icon: "w-10 h-10 text-xl", text: "text-2xl" },
-    lg: { icon: "w-14 h-14 text-3xl", text: "text-4xl" },
+    sm: { icon: "w-8 h-8 text-[17px]",  text: "text-[19px]" },
+    md: { icon: "w-10 h-10 text-xl",     text: "text-2xl" },
+    lg: { icon: "w-14 h-14 text-3xl",    text: "text-4xl" },
 };
 
 export function AppLogo({ href = "/", size = "sm", asLink = true }: LogoProps) {
     const s = sizes[size];
     const inner = (
         <span className="flex items-center gap-2.5">
-            <span className={`${s.icon} bg-blue-600 rounded-xl flex items-center justify-center text-white font-black flex-shrink-0`}>
+            <span className={`${s.icon} bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black flex-shrink-0`}>
                 K
             </span>
-            <span className={`${s.text} font-black text-gray-900 tracking-tight`}>KanbanFlow</span>
+            <span className={`${s.text} font-black text-gray-950 tracking-tight`}>KanbanFlow</span>
         </span>
     );
 
