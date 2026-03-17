@@ -12,6 +12,7 @@ import PriorityDistribution from "@/components/analytics/PriorityDistribution";
 import TeamWorkload from "@/components/analytics/TeamWorkload";
 import ProjectStats from "@/components/analytics/ProjectStats";
 import RecentActivityChart from "@/components/analytics/RecentActivityChart";
+import TasksByColumn from "@/components/analytics/TasksByColumn";
 import LoadingState from "@/components/ui/LoadingState";
 import { SkeletonCard } from "@/components/ui/SkeletonLoader";
 import { showToast } from "@/lib/toast";
@@ -262,6 +263,13 @@ export default function AnalyticsPage() {
                 </div>
 
                 <TeamWorkload teamWorkload={analytics.teamWorkload || []} />
+
+                <div className="mb-4">
+                    <TasksByColumn
+                        byColumn={analytics.tasks?.byColumn || []}
+                        totalTasks={analytics.tasks?.total || 0}
+                    />
+                </div>
 
                 <ProjectStats projectStats={analytics.projectStats || []} />
 

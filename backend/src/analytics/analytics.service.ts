@@ -5,6 +5,7 @@ import { Task } from '../tasks/entities/task.entity';
 import { Project } from '../projects/entities/project.entity';
 import { Board } from '../boards/entities/board.entity';
 import { User } from '../auth/entities/user.entity';
+import { List } from '../lists/entities/list.entity';
 
 @Injectable()
 export class AnalyticsService {
@@ -17,6 +18,8 @@ export class AnalyticsService {
     private boardRepository: Repository<Board>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(List)
+    private listRepository: Repository<List>,
   ) {}
 
   async getWorkspaceAnalytics(workspaceId: string) {
@@ -218,6 +221,33 @@ export class AnalyticsService {
       })
     );
 
+    // Get tasks grouped by list/column (includes custom columns)
+    const tasksByColumn = await this.taskRepository
+      .createQueryBuilder('task')
+      .select('task.listId', 'listId')
+      .addSelect('COUNT(*)', 'count')
+      .where('task.boardId IN (:...boardIds)', { boardIds })
+      .andWhere('task.isArchived = :isArchived', { isArchived: false })
+      .andWhere('task.listId IS NOT NULL')
+      .groupBy('task.listId')
+      .getRawMany();
+
+    // Resolve list names
+    const listIds = tasksByColumn.map(r => r.listId).filter(Boolean);
+    const lists = listIds.length > 0
+      ? await this.listRepository.findBy({ id: In(listIds) })
+      : [];
+
+    const byColumn = tasksByColumn.map(row => {
+      const list = lists.find(l => l.id === row.listId);
+      return {
+        listId: row.listId,
+        name: list?.name || 'Unknown',
+        count: parseInt(row.count) || 0,
+        position: list?.position ?? 999,
+      };
+    }).sort((a, b) => a.position - b.position);
+
     return {
       projects: {
         total: projects.length,
@@ -236,6 +266,7 @@ export class AnalyticsService {
         completionRate: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
         byPriority: tasksByPriority,
         byStatus: tasksByStatus,
+        byColumn,
       },
       projectStats,
       teamWorkload,
