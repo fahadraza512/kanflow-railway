@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import UpgradeModal from '../workspace/UpgradeModal';
 import { useHydration } from '@/hooks/useHydration';
+import { AppLogo } from './navbar/Logo';
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -68,12 +69,7 @@ export default function Navbar() {
                             </button>
                         )}
 
-                        <Link href={showUserContent ? "/dashboard" : "/"} className="flex items-center gap-2">
-                            <div className={`bg-blue-600 rounded-lg flex items-center justify-center text-white font-black shadow-lg shadow-blue-200 ${isLandingPage ? 'w-10 h-10' : 'w-8 h-8'}`}>
-                                <span className={isLandingPage ? 'text-2xl' : 'text-xl'}>K</span>
-                            </div>
-                            <span className={`font-black text-gray-900 tracking-tight ${isLandingPage ? 'text-2xl' : 'text-xl'}`}>KanbanFlow</span>
-                        </Link>
+                        <AppLogo href={showUserContent ? "/dashboard" : "/"} size={isLandingPage ? "md" : "sm"} />
 
                         {/* Workspace Switcher - Hidden on mobile */}
                         {showUserContent && !isLandingPage && activeWorkspace && (

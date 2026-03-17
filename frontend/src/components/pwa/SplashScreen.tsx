@@ -39,8 +39,8 @@ export default function SplashScreen() {
                         {/* Glow */}
                         <div className="absolute inset-0 bg-white/40 rounded-3xl blur-2xl animate-pulse-glow"></div>
                         {/* Logo */}
-                        <div className="relative w-28 h-28 bg-white rounded-3xl flex items-center justify-center shadow-2xl">
-                            <span className="text-6xl font-black text-blue-600">K</span>
+                        <div className="relative w-28 h-28 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl">
+                            <span className="text-6xl font-black text-white">K</span>
                         </div>
                     </div>
                 </div>

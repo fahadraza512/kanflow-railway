@@ -8,6 +8,7 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { AppLogo } from "@/components/layout/navbar/Logo";
 
 interface DashboardHeaderProps {
     isSidebarOpen: boolean;
@@ -46,14 +47,7 @@ function DashboardHeader({ isSidebarOpen, onToggleSidebar }: DashboardHeaderProp
                     </button>
 
                     {/* App Logo/Brand */}
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-black text-sm">K</span>
-                        </div>
-                        <span className="hidden sm:block text-lg font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            KanbanFlow
-                        </span>
-                    </div>
+                    <AppLogo href="/dashboard" size="sm" />
 
                     {!isHydrated ? (
                         <Skeleton width={150} height={32} />
