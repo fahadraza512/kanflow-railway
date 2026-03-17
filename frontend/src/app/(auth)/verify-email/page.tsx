@@ -156,7 +156,9 @@ export default function VerifyEmailPage() {
                 }
 
                 // Check if email was ever sent before (from localStorage)
-                const hasSentBefore = localStorage.getItem(HAS_SENT_EMAIL_KEY) === 'true';
+                // Only count it if the stored email matches the current email
+                const hasSentBefore = localStorage.getItem(HAS_SENT_EMAIL_KEY) === 'true' 
+                    && localStorage.getItem(VERIFICATION_EMAIL_ADDRESS_KEY) === email;
                 setHasEverSentEmail(hasSentBefore);
 
                 // Check if email was recently sent (from localStorage)
@@ -436,7 +438,7 @@ export default function VerifyEmailPage() {
                         ) : (
                             <>
                                 <RefreshCcw className="w-4 h-4" />
-                                {hasEverSentEmail ? 'Resend Verification Email' : 'Send Verification Email'}
+                                {hasEverSentEmail && state !== 'FIRST_VISIT' ? 'Resend Verification Email' : 'Send Verification Email'}
                             </>
                         )}
                     </button>
