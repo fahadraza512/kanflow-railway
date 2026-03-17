@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
-// import { RedisModule } from './redis/redis.module'; // Temporarily disabled - not needed for basic functionality
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
@@ -29,8 +29,8 @@ import { InvitationsModule } from './invitations/invitations.module';
       isGlobal: true,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(), // registered once at app level for all @Cron decorators
     DatabaseModule,
-    // RedisModule, // Temporarily disabled - not needed for basic functionality
     EmailModule,
     AuthModule,
     WorkspacesModule,

@@ -1,6 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { InvitationsController } from './invitations.controller';
 import { InvitationsService } from './invitations.service';
@@ -16,7 +15,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TypeOrmModule.forFeature([Invitation, User, Workspace, WorkspaceMember]),
     EmailModule,
     ConfigModule,
-    ScheduleModule.forRoot(),
     forwardRef(() => NotificationsModule),
   ],
   controllers: [InvitationsController],
