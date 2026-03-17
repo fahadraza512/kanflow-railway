@@ -735,6 +735,10 @@ body {
 
 /* PWA display mode */
 @media (display-mode: standalone) {
+  body {
+    background-color: #2563eb;
+  }
+
   .pwa-only {
     display: block;
   }
