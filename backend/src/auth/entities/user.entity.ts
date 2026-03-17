@@ -44,13 +44,13 @@ export class User {
   @Column({ default: false })
   onboardingComplete: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar', length: 255 })
   verificationToken: string | null;
 
   @Column({ nullable: true, type: 'timestamp' })
   verificationTokenExpires: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar', length: 255 })
   resetPasswordToken: string | null;
 
   @Column({ nullable: true, type: 'timestamp' })
