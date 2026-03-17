@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
-import { Bell } from "lucide-react";
+import { Bell, WifiOff } from "lucide-react";
 import { useUnreadNotificationsCount } from "@/hooks/api";
-import { useNotificationStream } from "@/hooks/useNotificationStream";
+import { useNotificationStream, useNotificationStreamStatus } from "@/hooks/useNotificationStream";
 import { NotificationPanel } from "./NotificationPanel";
 
 function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  // Global count — no workspace filter
   const { data: unreadCountData } = useUnreadNotificationsCount();
+  const { reconnecting } = useNotificationStreamStatus();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Connect to SSE stream for real-time notifications
   useNotificationStream();
 
   const rawCount = typeof unreadCountData === 'number' ? unreadCountData : 0;
@@ -95,7 +94,13 @@ function NotificationBell() {
           w-5 h-5 transition-transform duration-200
           ${rawCount > 0 ? 'animate-[wiggle_1s_ease-in-out_infinite]' : ''}
           ${isOpen ? 'scale-110' : 'group-hover:scale-110'}
+          ${reconnecting ? 'opacity-50' : ''}
         `} />
+
+        {/* Reconnecting indicator */}
+        {reconnecting && (
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white animate-pulse" title="Reconnecting..." />
+        )}
 
         {showBadge && (
           <span

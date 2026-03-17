@@ -279,15 +279,17 @@ export interface UpdateCommentDto {
 // ============================================
 // NOTIFICATION TYPES
 // ============================================
-export type NotificationType = 'assignment' | 'mention' | 'deadline' | 'comment';
-
 export interface Notification {
     id: EntityId;
     userId: EntityId;
-    type: NotificationType;
+    type: string;
+    title: string;
     message: string;
-    taskId: EntityId;
+    workspaceId?: string;
+    relatedEntityId?: string;
+    relatedEntityType?: string;
     isRead: boolean;
+    metadata?: Record<string, any>;
     createdAt: string;
 }
 

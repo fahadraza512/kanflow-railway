@@ -1,5 +1,5 @@
-import { Notification } from "@/types/kanban";
-import { useNotifications } from "@/hooks/useNotifications";
+import { Notification } from "@/types/api.types";
+import { useMarkNotificationAsRead } from "@/hooks/api";
 import { useDeleteNotification } from "@/hooks/api";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow, format } from "date-fns";
@@ -115,7 +115,7 @@ const notificationColors: Record<string, string> = {
 };
 
 export function NotificationItem({ notification, onClose, workspaceName, showWorkspace }: NotificationItemProps) {
-  const { markAsRead } = useNotifications();
+  const markAsReadMutation = useMarkNotificationAsRead();
   const deleteNotificationMutation = useDeleteNotification();
   const router = useRouter();
 
@@ -123,7 +123,10 @@ export function NotificationItem({ notification, onClose, workspaceName, showWor
   const colorClass = notificationColors[notification.type] || "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600";
 
   const handleClick = () => {
-    markAsRead(notification.id);
+    // Optimistically mark as read in cache immediately (no wait for API)
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification.id);
+    }
     
     // Get workspace ID from notification or use active workspace
     const workspaceId = notification.workspaceId;

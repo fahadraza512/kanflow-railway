@@ -40,14 +40,26 @@ export function useUnreadNotificationsCount(workspaceId?: string | null) {
 }
 
 /**
- * Hook to mark a notification as read
+ * Hook to mark a notification as read — optimistic update for instant UI response
  */
 export function useMarkNotificationAsRead() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (notificationId: string) => notificationService.markAsRead(notificationId),
-        onSuccess: () => {
+        onMutate: async (notificationId) => {
+            // Optimistically mark as read in the list cache
+            queryClient.setQueryData<Notification[]>(notificationKeys.list(), (old) => {
+                if (!Array.isArray(old)) return old;
+                return old.map(n => n.id === notificationId ? { ...n, isRead: true } : n);
+            });
+            // Decrement unread count
+            queryClient.setQueryData<number>(notificationKeys.unreadCount(), (old) => {
+                return Math.max(0, (typeof old === 'number' ? old : 0) - 1);
+            });
+        },
+        onError: () => {
+            // On error, refetch to restore correct state
             queryClient.invalidateQueries({ queryKey: notificationKeys.all });
         },
     });
