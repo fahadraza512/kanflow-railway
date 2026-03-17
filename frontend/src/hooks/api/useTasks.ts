@@ -128,30 +128,47 @@ export function useTask(id: EntityId | null) {
 }
 
 /**
- * Create task mutation
+ * Create task mutation with optimistic update
  */
 export function useCreateTask() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (data: CreateTaskDto) => taskService.createTask(data),
-        onSuccess: (newTask) => {
-            // Invalidate ALL task queries to ensure all workspace members see the change
-            queryClient.invalidateQueries({ 
-                queryKey: taskKeys.all,
-                refetchType: 'all'
-            });
-            
-            // Invalidate analytics to update stats
-            queryClient.invalidateQueries({ 
-                queryKey: analyticsKeys.all,
-                refetchType: 'all'
-            });
-            
-            showToast.success(`Task "${newTask.title}" created successfully`);
+
+        onMutate: async (data) => {
+            const boardKey = [...taskKeys.byBoard(data.boardId), undefined];
+            await queryClient.cancelQueries({ queryKey: taskKeys.byBoard(data.boardId) });
+
+            const previous = queryClient.getQueryData<any[]>(boardKey);
+
+            const optimistic = {
+                id: `temp-${Date.now()}`,
+                ...data,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            };
+
+            queryClient.setQueryData<any[]>(boardKey, (old) => [...(old ?? []), optimistic]);
+
+            return { previous, boardKey };
         },
-        onError: (error: any) => {
+
+        onError: (error: any, _data, ctx) => {
+            if (ctx?.previous !== undefined) {
+                queryClient.setQueryData(ctx.boardKey, ctx.previous);
+            }
             showApiError(error, 'Failed to create task');
+        },
+
+        onSuccess: (newTask, data) => {
+            const boardKey = [...taskKeys.byBoard(data.boardId), undefined];
+            // Replace optimistic entry with real task
+            queryClient.setQueryData<any[]>(boardKey, (old) =>
+                (old ?? []).map(t => t.id?.toString().startsWith('temp-') ? newTask : t)
+            );
+            queryClient.invalidateQueries({ queryKey: analyticsKeys.all, refetchType: 'all' });
+            showToast.success(`Task "${newTask.title}" created`);
         },
     });
 }

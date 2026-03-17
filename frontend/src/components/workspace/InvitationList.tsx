@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useImperativeHandle, forwardRef, useState } from 'react';
 import { invitationService, Invitation } from '@/services/api/invitation.service';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -13,13 +13,22 @@ interface InvitationListProps {
   workspaceId: string;
 }
 
+export interface InvitationListRef {
+  refresh: () => void;
+}
+
 const VALID_ROLES = ['owner', 'admin', 'pm', 'member', 'viewer'];
 
-export function InvitationList({ workspaceId }: InvitationListProps) {
+export const InvitationList = forwardRef<InvitationListRef, InvitationListProps>(
+  function InvitationList({ workspaceId }, ref) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    refresh: () => fetchInvitations(true),
+  }));
 
   useEffect(() => {
     if (workspaceId) {
@@ -27,9 +36,16 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
     }
   }, [workspaceId, statusFilter]);
 
-  const fetchInvitations = async () => {
+  // Poll every 10 seconds for real-time updates
+  useEffect(() => {
+    if (!workspaceId) return;
+    const interval = setInterval(() => fetchInvitations(true), 10000);
+    return () => clearInterval(interval);
+  }, [workspaceId, statusFilter]);
+
+  const fetchInvitations = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (!isRefresh) setInitialLoading(true);
       const data = await invitationService.getWorkspaceInvitations(
         workspaceId,
         statusFilter || undefined
@@ -39,7 +55,7 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
       console.error('Failed to fetch invitations:', err);
       setInvitations([]);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -47,7 +63,7 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
     try {
       setActionLoading(invitationId);
       await invitationService.cancelInvitation(invitationId);
-      await fetchInvitations();
+      await fetchInvitations(true);
     } catch (err: any) {
       console.error('Failed to cancel invitation:', err);
       alert(err.message || 'Failed to cancel invitation');
@@ -60,7 +76,7 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
     try {
       setActionLoading(invitationId);
       await invitationService.resendInvitation(invitationId);
-      await fetchInvitations();
+      await fetchInvitations(true);
       alert('Invitation resent successfully');
     } catch (err: any) {
       console.error('Failed to resend invitation:', err);
@@ -75,7 +91,7 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
     try {
       setActionLoading(invitationId);
       await invitationService.deleteInvitation(invitationId);
-      await fetchInvitations();
+      await fetchInvitations(true);
     } catch (err: any) {
       console.error('Failed to delete invitation:', err);
       alert(err.message || 'Failed to delete invitation');
@@ -144,7 +160,7 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
     );
   }
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex justify-center py-8">
         <LoadingSpinner />
@@ -273,4 +289,4 @@ export function InvitationList({ workspaceId }: InvitationListProps) {
       </div>
     </div>
   );
-}
+});

@@ -28,7 +28,7 @@ export function useWorkspaceMembers(
         queryKey: workspaceMemberKeys.byWorkspace(workspaceId!),
         queryFn: () => workspaceMemberService.getMembers(workspaceId!),
         enabled: !!workspaceId && (options?.enabled ?? true),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 0,
         refetchInterval: options?.refetchInterval,
         // Retry configuration: 3 attempts with exponential backoff
         retry: 3,

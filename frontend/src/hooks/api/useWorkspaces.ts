@@ -7,6 +7,7 @@ import {
     EntityId,
     UserRole,
 } from '@/types/api.types';
+import { workspaceMemberKeys } from './useWorkspaceMembers';
 
 // Query keys
 export const workspaceKeys = {
@@ -231,9 +232,8 @@ export function useUpdateMemberRole() {
         mutationFn: ({ workspaceId, userId, role }: { workspaceId: EntityId; userId: EntityId; role: UserRole }) =>
             workspaceService.updateMemberRole(workspaceId, userId, role),
         onSuccess: (_, { workspaceId }) => {
-            // Invalidate members list
             queryClient.invalidateQueries({ queryKey: workspaceKeys.members(workspaceId) });
-            // Invalidate workspace list so the affected member's next poll gets the updated role
+            queryClient.invalidateQueries({ queryKey: workspaceMemberKeys.byWorkspace(workspaceId) });
             queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() });
             queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(workspaceId) });
             
@@ -255,9 +255,8 @@ export function useRemoveWorkspaceMember() {
         mutationFn: ({ workspaceId, userId }: { workspaceId: EntityId; userId: EntityId }) =>
             workspaceService.removeMember(workspaceId, userId),
         onSuccess: (_, { workspaceId }) => {
-            // Invalidate members list
             queryClient.invalidateQueries({ queryKey: workspaceKeys.members(workspaceId) });
-            // Invalidate workspace list so the removed member's next poll drops the workspace
+            queryClient.invalidateQueries({ queryKey: workspaceMemberKeys.byWorkspace(workspaceId) });
             queryClient.invalidateQueries({ queryKey: workspaceKeys.lists() });
             
             showToast.success('Member removed successfully');

@@ -86,19 +86,17 @@ export default function BoardView({
 
     const activeSensors = readOnly ? [] : sensors;
 
-    const handleAddColumn = async () => {
+    const handleAddColumn = () => {
         const name = newColumnName.trim();
         if (!name) { setIsAddingColumn(false); return; }
         const boardId = lists[0]?.boardId?.toString();
         if (!boardId) return;
-        try {
-            await createListMutation.mutateAsync({ boardId, name });
-            setNewColumnName("");
-            setIsAddingColumn(false);
-            onTaskUpdate();
-        } catch {
-            // error toast handled by hook
-        }
+        // Close immediately — optimistic update shows the column right away
+        setNewColumnName("");
+        setIsAddingColumn(false);
+        createListMutation.mutate({ boardId, name }, {
+            onSuccess: () => onTaskUpdate(),
+        });
     };
 
     const onDragStart = (event: DragStartEvent) => {

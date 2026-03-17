@@ -75,31 +75,29 @@ export default function ListColumn({
         disabled: readOnly || groupBy !== 'none'
     });
 
-    const handleQuickAdd = async () => {
-        if (quickTitle.trim()) {
-            try {
-                await createTaskMutation.mutateAsync({
-                    listId: list.id.toString(),
-                    boardId: list.boardId.toString(),
-                    projectId,
-                    title: quickTitle.trim(),
-                    description: "",
-                    priority: "medium",
-                    status: list.name.toLowerCase() === "backlog" ? "todo" :
-                        list.name.toLowerCase() === "in progress" ? "inProgress" :
-                            list.name.toLowerCase() === "in review" ? "inReview" :
-                                list.name.toLowerCase() === "done" ? "done" : "todo",
-                    position: tasks.length
-                });
-                setQuickTitle("");
-                setIsQuickAdding(false);
-                onUpdate?.();
-            } catch (error: any) {
-                showToast.error(error?.message || "Failed to create task");
-            }
-        } else {
+    const handleQuickAdd = () => {
+        if (!quickTitle.trim()) {
             setIsQuickAdding(false);
+            return;
         }
+        const title = quickTitle.trim();
+        setQuickTitle("");
+        setIsQuickAdding(false);
+        createTaskMutation.mutate({
+            listId: list.id.toString(),
+            boardId: list.boardId.toString(),
+            projectId,
+            title,
+            description: "",
+            priority: "medium",
+            status: list.name.toLowerCase() === "backlog" ? "todo" :
+                list.name.toLowerCase() === "in progress" ? "inProgress" :
+                    list.name.toLowerCase() === "in review" ? "inReview" :
+                        list.name.toLowerCase() === "done" ? "done" : "todo",
+            position: tasks.length
+        }, {
+            onSuccess: () => onUpdate?.(),
+        });
     };
 
     const handleRename = async () => {

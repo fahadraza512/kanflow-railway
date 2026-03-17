@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useWorkspaceMembers } from "@/hooks/api/useWorkspaceMembers";
@@ -11,7 +11,7 @@ import { showToast } from "@/lib/toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Building2, X, Mail, Search, MoreVertical } from "lucide-react";
 import { InviteMemberModal } from "@/components/workspace/InviteMemberModal";
-import { InvitationList } from "@/components/workspace/InvitationList";
+import { InvitationList, InvitationListRef } from "@/components/workspace/InvitationList";
 import { ChangeRoleModal } from "@/components/workspace/ChangeRoleModal";
 import { RemoveMemberModal } from "@/components/workspace/RemoveMemberModal";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +28,7 @@ function MembersPageContent() {
     const { user } = useAuthStore();
     const { isOwner, isAdmin, canInviteMembers, canRemoveMembers, canChangeRoles } = useWorkspaceRole();
     const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
-    const [invitationRefreshKey, setInvitationRefreshKey] = useState(0);
+    const invitationListRef = useRef<InvitationListRef>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
@@ -393,7 +393,7 @@ function MembersPageContent() {
                                 </div>
                                 
                                 <InvitationList 
-                                    key={invitationRefreshKey}
+                                    ref={invitationListRef}
                                     workspaceId={String(activeWorkspace.id)}
                                 />
                             </div>
@@ -409,7 +409,7 @@ function MembersPageContent() {
                     workspaceId={activeWorkspace?.id || ''}
                     onSuccess={() => {
                         showToast.success('Invitation sent successfully');
-                        setInvitationRefreshKey(prev => prev + 1);
+                        invitationListRef.current?.refresh();
                     }}
                 />
             )}

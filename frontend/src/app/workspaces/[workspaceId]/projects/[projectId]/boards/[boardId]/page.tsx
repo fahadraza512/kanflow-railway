@@ -12,7 +12,6 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import BoardView from "@/components/board/BoardView";
 import BoardToolbar from "@/components/board/BoardToolbar";
 import BoardStatsBar from "@/components/board/BoardStatsBar";
-import CreateTaskModal from "@/components/task/CreateTaskModal";
 import TaskDetailPanel from "@/components/task/TaskDetailPanel";
 import AdvancedFilters, { FilterOptions, applyFilters } from "@/components/board/AdvancedFilters";
 import { Task } from "@/types/api.types";
@@ -24,7 +23,6 @@ export default function BoardPage() {
     const router = useRouter();
     const { isViewer, canCreateTask } = useWorkspaceRole();
     
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -256,15 +254,6 @@ export default function BoardPage() {
             description: 'Close task detail panel'
         },
         {
-            key: 'c',
-            callback: () => {
-                if (!isDetailPanelOpen && lists.length > 0) {
-                    setIsCreateModalOpen(true);
-                }
-            },
-            description: 'Create new task'
-        },
-        {
             key: '/',
             callback: () => {
                 const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
@@ -294,7 +283,7 @@ export default function BoardPage() {
             },
             description: 'Previous task'
         }
-    ], !isCreateModalOpen); // Disable when modal is open
+    ]);
 
     // Loading state
     if (isLoading) {
@@ -387,18 +376,6 @@ export default function BoardPage() {
                         />
                     </div>
                 </div>
-
-                {lists.length > 0 && (
-                    <CreateTaskModal
-                        isOpen={isCreateModalOpen}
-                        onClose={() => setIsCreateModalOpen(false)}
-                        boardId={boardId as string}
-                        projectId={projectId as string}
-                        workspaceId={workspaceId as string}
-                        listId={lists[0].id.toString()}
-                        onSuccess={handleTaskUpdate}
-                    />
-                )}
 
                 {selectedTask && (
                     <TaskDetailPanel
