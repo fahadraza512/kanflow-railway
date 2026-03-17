@@ -3,20 +3,9 @@
 import { useEffect, useState } from 'react';
 
 export default function SplashScreen() {
-    // Start visible immediately — avoids gap between OS splash and custom splash
     const [show, setShow] = useState(true);
 
     useEffect(() => {
-        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                      (window.navigator as any).standalone === true;
-
-        if (!isPWA) {
-            // Not a PWA — hide immediately without showing
-            setShow(false);
-            return;
-        }
-
-        // PWA — hide after 2s
         const timer = setTimeout(() => setShow(false), 2000);
         return () => clearTimeout(timer);
     }, []);
