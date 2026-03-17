@@ -4,7 +4,7 @@
   "description": "Visual project management and task tracking",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#2563eb",
   "theme_color": "#2563eb",
   "orientation": "any",
   "scope": "/",
