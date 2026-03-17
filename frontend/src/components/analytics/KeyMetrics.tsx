@@ -49,7 +49,7 @@ export default function KeyMetrics({
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             {metrics.map((metric, idx) => (
                 <div key={idx} className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
                     <div className="flex items-center justify-between mb-2">

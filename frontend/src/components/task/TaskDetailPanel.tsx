@@ -30,7 +30,6 @@ interface TaskDetailPanelProps {
 
 export default function TaskDetailPanel({ task, isOpen, onClose, onUpdate, readOnly, onNext, onPrevious, lists = [] }: TaskDetailPanelProps) {
     const contentRef = useRef<HTMLDivElement>(null);
-    const [bottomSheetHeight, setBottomSheetHeight] = useState('90vh');
     
     const {
         title,
@@ -59,33 +58,6 @@ export default function TaskDetailPanel({ task, isOpen, onClose, onUpdate, readO
         handleDueDateChange,
     } = useTaskDetail(task, isOpen, onClose, onUpdate, lists);
 
-    // Handle keyboard opening on mobile
-    useEffect(() => {
-        if (!isOpen || typeof window === 'undefined') return;
-
-        const handleResize = () => {
-            if (window.visualViewport) {
-                const viewportHeight = window.visualViewport.height;
-                const windowHeight = window.innerHeight;
-                const keyboardHeight = windowHeight - viewportHeight;
-                
-                if (keyboardHeight > 100) {
-                    // Keyboard is open
-                    setBottomSheetHeight(`${viewportHeight * 0.9}px`);
-                } else {
-                    // Keyboard is closed
-                    setBottomSheetHeight('90vh');
-                }
-            }
-        };
-
-        window.visualViewport?.addEventListener('resize', handleResize);
-        
-        return () => {
-            window.visualViewport?.removeEventListener('resize', handleResize);
-        };
-    }, [isOpen]);
-
     // Scroll input into view when focused
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setTimeout(() => {
@@ -112,13 +84,12 @@ export default function TaskDetailPanel({ task, isOpen, onClose, onUpdate, readO
     const [isDragging, setIsDragging] = useState(false);
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        if (window.innerWidth >= 1024) return; // Only on mobile
         setStartY(e.touches[0].clientY);
         setIsDragging(true);
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isDragging || window.innerWidth >= 1024) return;
+        if (!isDragging) return;
         const deltaY = e.touches[0].clientY - startY;
         if (deltaY > 0) { // Only allow downward swipe
             setCurrentY(deltaY);
@@ -126,7 +97,7 @@ export default function TaskDetailPanel({ task, isOpen, onClose, onUpdate, readO
     };
 
     const handleTouchEnd = () => {
-        if (!isDragging || window.innerWidth >= 1024) return;
+        if (!isDragging) return;
         if (currentY > 100) { // Swipe threshold
             onClose();
         }
@@ -150,10 +121,8 @@ export default function TaskDetailPanel({ task, isOpen, onClose, onUpdate, readO
             {/* Mobile: Bottom Sheet | Desktop: Side Panel */}
             <div 
                 ref={contentRef}
-                className="relative w-full lg:max-w-[320px] bg-white shadow-lg flex flex-col border-l border-gray-200 rounded-t-3xl lg:rounded-none safe-bottom transition-transform"
+                className="relative w-full lg:max-w-[320px] bg-white shadow-lg flex flex-col border-l border-gray-200 rounded-t-3xl lg:rounded-none safe-bottom transition-transform h-[90vh] lg:h-full"
                 style={{ 
-                    height: window.innerWidth < 1024 ? bottomSheetHeight : '100%',
-                    maxHeight: window.innerWidth < 1024 ? '90vh landscape:max-h-[75vh]' : '100%',
                     transform: isDragging ? `translateY(${currentY}px)` : 'translateY(0)',
                 }}
                 onTouchStart={handleTouchStart}

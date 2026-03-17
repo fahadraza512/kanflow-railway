@@ -22,7 +22,7 @@ export default function ProjectStats({ projectStats }: ProjectStatsProps) {
             {projectStats.length === 0 ? (
                 <p className="text-center text-gray-400 py-4 text-xs">No projects yet</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {projectStats.map((project) => (
                         <div key={project.projectId} className="p-2 bg-gray-50 rounded-lg border border-gray-200">
                             <h3 className="text-xs font-bold text-gray-900 mb-2 truncate">{project.name}</h3>

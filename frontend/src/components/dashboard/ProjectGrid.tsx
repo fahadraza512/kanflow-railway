@@ -107,7 +107,7 @@ export default function ProjectGrid({
     }, [projects, allWorkspaceTasks]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             {projects.map((project) => {
                 const boardCount = (project as any).boardCount || 0;
                 const membersCount = projectMembersCount[project.id] || 0;

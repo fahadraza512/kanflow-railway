@@ -100,10 +100,10 @@ export default function BoardToolbar({
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <button 
                         onClick={onOpenFilters}
-                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors relative"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors relative"
                     >
                         <Filter className="w-3.5 h-3.5" />
-                        Filter
+                        <span className="hidden sm:inline">Filter</span>
                         {activeFiltersCount > 0 && (
                             <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                                 {activeFiltersCount}
