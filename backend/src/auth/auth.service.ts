@@ -158,8 +158,8 @@ export class AuthService {
     const user = this.userRepository.create({
       ...registerDto,
       password: hashedPassword,
-      verificationToken: isInviteRegistration ? null : verificationToken,
-      verificationTokenExpires: isInviteRegistration ? null : verificationTokenExpires,
+      verificationToken: isInviteRegistration ? undefined : verificationToken,
+      verificationTokenExpires: isInviteRegistration ? undefined : verificationTokenExpires,
       emailVerified: isInviteRegistration, // auto-verify for invite signups
       provider: 'local',
       pendingInviteToken: inviteToken || null,
@@ -554,7 +554,7 @@ export class AuthService {
       where: { resetPasswordToken: token },
     });
 
-    if (!user || user.resetPasswordExpires < new Date()) {
+    if (!user || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 

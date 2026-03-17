@@ -45,16 +45,16 @@ export class User {
   onboardingComplete: boolean;
 
   @Column({ nullable: true })
-  verificationToken: string;
+  verificationToken: string | null;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  verificationTokenExpires: Date | null;
 
   @Column({ nullable: true })
-  verificationTokenExpires: Date;
+  resetPasswordToken: string | null;
 
-  @Column({ nullable: true })
-  resetPasswordToken: string;
-
-  @Column({ nullable: true })
-  resetPasswordExpires: Date;
+  @Column({ nullable: true, type: 'timestamp' })
+  resetPasswordExpires: Date | null;
 
   @Column({ nullable: true })
   activeWorkspaceId: string;
