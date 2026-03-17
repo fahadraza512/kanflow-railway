@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { apiClient } from '@/services/api/client';
+import { apiClient } from '@/services/api/base.service';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { showToast } from '@/lib/toast';
 
