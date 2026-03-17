@@ -45,6 +45,7 @@ export interface List {
     boardId: string | number;
     name: string;
     position: number;
+    status?: string | null;
     createdAt: string;
 }
 

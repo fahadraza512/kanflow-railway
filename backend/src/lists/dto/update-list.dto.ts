@@ -8,4 +8,8 @@ export class UpdateListDto {
   @IsNumber()
   @IsOptional()
   position?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

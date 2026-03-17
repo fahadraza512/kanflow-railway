@@ -90,10 +90,12 @@ export default function ListColumn({
             title,
             description: "",
             priority: "medium",
-            status: list.name.toLowerCase() === "backlog" ? "todo" :
+            status: (list.status as any) || (
+                list.name.toLowerCase() === "backlog" ? "todo" :
                 list.name.toLowerCase() === "in progress" ? "inProgress" :
                     list.name.toLowerCase() === "in review" ? "inReview" :
-                        list.name.toLowerCase() === "done" ? "done" : "todo",
+                        list.name.toLowerCase() === "done" ? "done" : "todo"
+            ),
             position: tasks.length
         }, {
             onSuccess: () => onUpdate?.(),

@@ -27,6 +27,9 @@ export class List {
   @Column({ default: 0 })
   position: number;
 
+  @Column({ nullable: true, default: null })
+  status: string | null; // 'todo', 'inProgress', 'inReview', 'done' — null means use column name
+
   @CreateDateColumn()
   createdAt: Date;
 

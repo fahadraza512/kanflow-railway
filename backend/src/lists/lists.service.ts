@@ -6,6 +6,14 @@ import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
 import { ReorderListsDto } from './dto/reorder-lists.dto';
 
+function deriveStatusFromName(name: string): string {
+  const lower = name.toLowerCase().trim();
+  if (lower.includes('progress')) return 'inProgress';
+  if (lower.includes('review') || lower.includes('testing') || lower.includes('qa')) return 'inReview';
+  if (lower.includes('done') || lower.includes('complete') || lower.includes('finished') || lower.includes('closed')) return 'done';
+  return 'todo';
+}
+
 @Injectable()
 export class ListsService {
   constructor(
@@ -25,16 +33,21 @@ export class ListsService {
       createListDto.position = (maxPosition?.max || 0) + 1;
     }
 
+    // Auto-derive status from name if not explicitly provided
+    if (!createListDto.status) {
+      createListDto.status = deriveStatusFromName(createListDto.name);
+    }
+
     const list = this.listRepository.create(createListDto);
     return this.listRepository.save(list);
   }
 
   async createDefaultLists(boardId: string): Promise<List[]> {
     const defaultLists = [
-      { name: 'Backlog', position: 1 },
-      { name: 'In Progress', position: 2 },
-      { name: 'In Review', position: 3 },
-      { name: 'Done', position: 4 },
+      { name: 'Backlog',     position: 1, status: 'todo' },
+      { name: 'In Progress', position: 2, status: 'inProgress' },
+      { name: 'In Review',   position: 3, status: 'inReview' },
+      { name: 'Done',        position: 4, status: 'done' },
     ];
 
     const lists = defaultLists.map((listData) =>

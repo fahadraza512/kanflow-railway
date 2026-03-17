@@ -151,6 +151,7 @@ export interface List {
     boardId: EntityId;
     name: string;
     position: number;
+    status?: string | null;
     createdAt: string;
     updatedAt?: string;
 }

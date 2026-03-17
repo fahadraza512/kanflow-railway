@@ -6,6 +6,7 @@ export interface List {
     boardId: string;
     name: string;
     position: number;
+    status?: string | null;
     createdAt: string;
     updatedAt?: string;
 }
@@ -14,11 +15,13 @@ export interface CreateListDto {
     boardId: string;
     name: string;
     position?: number;
+    status?: string;
 }
 
 export interface UpdateListDto {
     name?: string;
     position?: number;
+    status?: string;
 }
 
 export interface ReorderListsDto {

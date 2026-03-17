@@ -12,4 +12,8 @@ export class CreateListDto {
   @IsNumber()
   @IsOptional()
   position?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

@@ -27,13 +27,14 @@ import { useUpdateTask } from "@/hooks/api/useTasks";
 import { useReorderLists, useCreateList } from "@/hooks/api/useLists";
 import { Plus } from "lucide-react";
 
-// Helper function to map list name to task status
-function getStatusFromListName(listName: string): string {
-    const lowerName = listName.toLowerCase();
-    if (lowerName.includes("progress")) return "inProgress";
-    if (lowerName.includes("review")) return "inReview";
-    if (lowerName.includes("done") || lowerName.includes("complete")) return "done";
-    return "todo"; // Default for Backlog or any other list
+// Helper: get task status from a list — prefers list.status, falls back to name matching
+function getStatusFromList(list: List): string {
+    if (list.status) return list.status;
+    const lower = list.name.toLowerCase();
+    if (lower.includes("progress")) return "inProgress";
+    if (lower.includes("review")) return "inReview";
+    if (lower.includes("done") || lower.includes("complete")) return "done";
+    return "todo";
 }
 
 interface BoardViewProps {
@@ -140,7 +141,7 @@ export default function BoardView({
                 if (groupBy === 'none') {
                     // Normal mode: update listId and status
                     const targetList = lists.find(l => l.id === newListId);
-                    const status = getStatusFromListName(targetList?.name || "");
+                    const status = targetList ? getStatusFromList(targetList) : 'todo';
                     updateData.listId = newListId;
                     updateData.status = status;
                 } else if (groupBy === 'priority') {
@@ -205,7 +206,7 @@ export default function BoardView({
                 if (groupBy === 'none') {
                     // Normal mode: update listId and status
                     const targetList = over.data.current?.list;
-                    const status = getStatusFromListName(targetList?.name || "");
+                    const status = targetList ? getStatusFromList(targetList) : 'todo';
                     updateData.listId = newListId;
                     updateData.status = status;
                 } else if (groupBy === 'priority') {
