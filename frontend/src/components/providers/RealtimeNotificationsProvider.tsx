@@ -1,13 +1,12 @@
 'use client';
 
-import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useNotificationStream } from '@/hooks/useNotificationStream';
 
 /**
- * Real-Time Notifications Provider
- * Wraps the useRealtimeNotifications hook in a component
- * to be used in the root layout
+ * App-level SSE connection — mounted ONCE in root layout, lives for the entire session.
+ * Handles all workspaces, all pages, survives navigation and workspace switches.
  */
 export default function RealtimeNotificationsProvider() {
-    useRealtimeNotifications();
+    useNotificationStream();
     return null;
 }

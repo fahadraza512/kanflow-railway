@@ -119,12 +119,12 @@ export function useNotificationStream() {
         eventSourceRef.current = eventSource;
 
         eventSource.onopen = () => {
+          const isReconnect = reconnectAttemptsRef.current > 0;
           reconnectAttemptsRef.current = 0;
           setReconnecting(false);
 
-          // On reconnect, sync missed notifications by refetching once
-          // (only if we've connected before — i.e. this is a reconnect, not first connect)
-          if (seenIdsRef.current.size > 0) {
+          // On reconnect, sync any missed notifications
+          if (isReconnect) {
             queryClient.invalidateQueries({ queryKey: notificationKeys.all });
           }
         };

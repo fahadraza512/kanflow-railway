@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
-import { Bell, WifiOff } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useUnreadNotificationsCount } from "@/hooks/api";
-import { useNotificationStream, useNotificationStreamStatus } from "@/hooks/useNotificationStream";
+import { useNotificationStreamStatus } from "@/hooks/useNotificationStream";
 import { NotificationPanel } from "./NotificationPanel";
 
 function NotificationBell() {
@@ -11,7 +11,7 @@ function NotificationBell() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useNotificationStream();
+  // SSE connection is owned by RealtimeNotificationsProvider at app level — not here
 
   const rawCount = typeof unreadCountData === 'number' ? unreadCountData : 0;
 
