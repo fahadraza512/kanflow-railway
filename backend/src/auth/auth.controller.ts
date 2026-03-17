@@ -48,7 +48,7 @@ export class AuthController {
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user);
     const frontendUrl = this.configService.get('FRONTEND_URL');
-    res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}`);
+    res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}&refreshToken=${result.refreshToken}`);
   }
 
   @Get('verify-email')
@@ -134,5 +134,20 @@ export class AuthController {
   @Post('cleanup-stale-tokens')
   async cleanupStaleTokens() {
     return this.authService.cleanupStalePendingTokens();
+  }
+
+  @Post('refresh')
+  async refreshToken(@Body('refreshToken') refreshToken: string) {
+    if (!refreshToken) {
+      throw new Error('Refresh token is required');
+    }
+    return this.authService.refreshAccessToken(refreshToken);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@CurrentUser() user: any) {
+    await this.authService.logout(user.userId);
+    return { message: 'Logged out successfully' };
   }
 }

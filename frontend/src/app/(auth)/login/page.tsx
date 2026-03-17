@@ -119,7 +119,7 @@ export default function LoginPage() {
         setShow2FA(true);
         showToast.success("Please enter your 2FA code");
       } else {
-        setAuth(user, accessToken, user.role || "USER");
+        setAuth(user, accessToken, user.role || "USER", (result as any).refreshToken);
         showToast.success(`Welcome back, ${user.name}!`);
 
         // Priority 1: pending invite token — from backend DB lookup only (works cross-device)

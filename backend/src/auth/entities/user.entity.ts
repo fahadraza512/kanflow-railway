@@ -41,8 +41,11 @@ export class User {
   @Column({ nullable: true, type: 'varchar', length: 255 })
   pendingInviteToken: string | null;
 
-  @Column({ default: false })
-  onboardingComplete: boolean;
+  @Column({ nullable: true, type: 'varchar', length: 512 })
+  refreshToken: string | null;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  refreshTokenExpires: Date | null;
 
   @Column({ nullable: true, type: 'varchar', length: 255 })
   verificationToken: string | null;

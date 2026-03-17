@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, LessThan } from 'typeorm';
+import { Repository, Not, LessThan, IsNull } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -51,6 +51,24 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
   ) { }
+
+  /** Generate access + refresh token pair and persist the refresh token */
+  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.configService.get('JWT_EXPIRES_IN') || '7d',
+    });
+
+    const refreshToken = uuidv4();
+    const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    user.refreshToken = await bcrypt.hash(refreshToken, 10);
+    user.refreshTokenExpires = refreshTokenExpires;
+    await this.userRepository.save(user);
+
+    return { accessToken, refreshToken };
+  }
 
   async register(registerDto: RegisterDto, inviteToken?: string) {
     const existingUser = await this.userRepository.findOne({
@@ -252,8 +270,7 @@ export class AuthService {
     }
 
     console.log('Login successful! Generating token...');
-    const payload = { email: user.email, sub: user.id };
-    const accessToken = this.jwtService.sign(payload);
+    const { accessToken, refreshToken } = await this.generateTokens(user);
 
     // Check if user is a workspace member (invited user)
     const isWorkspaceMember = await this.workspaceMemberRepository.count({
@@ -337,10 +354,11 @@ export class AuthService {
     console.log('================================');
 
     // If user is a workspace member, they should NEVER see onboarding
-    const onboardingCompleted = user.onboardingCompleted || user.onboardingComplete || isInvitedUser;
+    const onboardingCompleted = user.onboardingCompleted || isInvitedUser;
 
     const response: any = {
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -372,7 +390,7 @@ export class AuthService {
         picture: user.picture,
         provider: 'google',
         emailVerified: true,
-        onboardingCompleted: false, // New Google users need onboarding
+        onboardingCompleted: false,
       });
       await this.userRepository.save(existingUser);
     }
@@ -384,15 +402,42 @@ export class AuthService {
 
     const hasActiveWorkspace = !!existingUser.activeWorkspaceId;
     const isInvitedUser = isWorkspaceMember > 0 || hasActiveWorkspace;
+    const onboardingCompleted = existingUser.onboardingCompleted || isInvitedUser;
 
-    // If user is a workspace member, they should NEVER see onboarding
-    const onboardingCompleted = existingUser.onboardingCompleted || existingUser.onboardingComplete || isInvitedUser;
+    // Handle pending invite token — same logic as email/password login
+    let validPendingToken = existingUser.pendingInviteToken;
 
-    const payload = { email: existingUser.email, sub: existingUser.id };
-    const accessToken = this.jwtService.sign(payload);
+    if (existingUser.pendingInviteToken) {
+      const invitation = await this.workspaceRepository.manager.findOne(Invitation, {
+        where: { token: existingUser.pendingInviteToken, status: 'pending' as any },
+      });
+      if (!invitation || new Date() > new Date(invitation.expiresAt)) {
+        existingUser.pendingInviteToken = null;
+        await this.userRepository.save(existingUser);
+        validPendingToken = null;
+      }
+    }
+
+    if (!validPendingToken) {
+      const pendingInvitation = await this.workspaceRepository.manager
+        .createQueryBuilder(Invitation, 'inv')
+        .where('inv.invitedEmail = :email', { email: existingUser.email })
+        .andWhere('inv.status = :status', { status: 'pending' })
+        .orderBy('inv.createdAt', 'DESC')
+        .getOne();
+
+      if (pendingInvitation && new Date() <= new Date(pendingInvitation.expiresAt)) {
+        validPendingToken = pendingInvitation.token;
+        existingUser.pendingInviteToken = validPendingToken;
+        await this.userRepository.save(existingUser);
+      }
+    }
+
+    const { accessToken, refreshToken } = await this.generateTokens(existingUser);
 
     return {
       accessToken,
+      refreshToken,
       user: {
         id: existingUser.id,
         email: existingUser.email,
@@ -402,7 +447,9 @@ export class AuthService {
         picture: existingUser.picture,
         onboardingCompleted: onboardingCompleted,
         activeWorkspaceId: existingUser.activeWorkspaceId,
-        skipOnboarding: isInvitedUser,
+        hasPendingInvitation: !!validPendingToken,
+        pendingInviteToken: validPendingToken,
+        skipOnboarding: !!validPendingToken || isInvitedUser,
       },
     };
   }
@@ -600,11 +647,15 @@ export class AuthService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async cleanupUnverifiedAccounts() {
-    // Delete unverified accounts whose verification token has expired
-    const result = await this.userRepository.delete({
-      emailVerified: false,
-      verificationTokenExpires: LessThan(new Date()),
-    });
+    // Only delete unverified accounts that have an EXPIRED token (not null — those are invite users)
+    const result = await this.userRepository
+      .createQueryBuilder()
+      .delete()
+      .from(User)
+      .where('emailVerified = :verified', { verified: false })
+      .andWhere('verificationToken IS NOT NULL')
+      .andWhere('verificationTokenExpires < :now', { now: new Date() })
+      .execute();
 
     if (result.affected && result.affected > 0) {
       console.log(`Cleaned up ${result.affected} expired unverified account(s)`);
@@ -777,6 +828,39 @@ export class AuthService {
   async markOnboardingComplete(userId: string): Promise<void> {
     await this.userRepository.update(userId, {
       onboardingCompleted: true
+    });
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+    // Find user by checking all users with a non-null refresh token
+    const users = await this.userRepository.find({
+      where: { refreshTokenExpires: Not(IsNull()) },
+    });
+
+    let matchedUser: User | null = null;
+    for (const u of users) {
+      if (u.refreshToken && await bcrypt.compare(refreshToken, u.refreshToken)) {
+        matchedUser = u;
+        break;
+      }
+    }
+
+    if (!matchedUser) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (!matchedUser.refreshTokenExpires || matchedUser.refreshTokenExpires < new Date()) {
+      throw new UnauthorizedException('Refresh token expired. Please log in again.');
+    }
+
+    return this.generateTokens(matchedUser);
+  }
+
+  async logout(userId: string): Promise<void> {
+    // Invalidate refresh token — access token expires naturally via JWT TTL
+    await this.userRepository.update(userId, {
+      refreshToken: null,
+      refreshTokenExpires: null,
     });
   }
 

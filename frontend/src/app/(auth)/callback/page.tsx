@@ -30,7 +30,8 @@ export default function AuthCallbackPage() {
       .get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
         const user = res.data?.data ?? res.data;
-        setAuth(user, token, user.role || 'USER');
+        const refreshToken = searchParams.get('refreshToken') || undefined;
+        setAuth(user, token, user.role || 'USER', refreshToken);
         showToast.success(`Welcome, ${user.name || user.firstName}!`);
 
         // Pending invite takes priority

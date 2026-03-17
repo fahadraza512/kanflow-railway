@@ -15,6 +15,7 @@ interface AuthState {
     pendingInviteToken?: string | null;
   } | null;
   token: string | null;
+  refreshToken: string | null;
   role: string | null;
   setAuth: (user: { 
     id: string; 
@@ -27,7 +28,8 @@ interface AuthState {
     activeWorkspaceId?: string;
     hasPendingInvitation?: boolean;
     pendingInviteToken?: string | null;
-  }, token: string, role: string) => void;
+  }, token: string, role: string, refreshToken?: string) => void;
+  setRefreshToken: (refreshToken: string) => void;
   setUser: (user: { 
     id: string; 
     name: string; 
@@ -50,10 +52,12 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       role: null,
-      setAuth: (user, token, role) => {
-        set({ user, token, role });
+      setAuth: (user, token, role, refreshToken) => {
+        set({ user, token, role, refreshToken: refreshToken ?? null });
       },
+      setRefreshToken: (refreshToken) => set({ refreshToken }),
       setUser: (user) => {
         set({ user });
       },
@@ -69,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
           ...(data.avatar !== undefined && { avatar: data.avatar || undefined })
         } : null
       })),
-      logout: () => set({ user: null, token: null, role: null }),
+      logout: () => set({ user: null, token: null, refreshToken: null, role: null }),
     }),
     {
       name: 'auth-storage',

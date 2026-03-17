@@ -61,13 +61,36 @@ apiClient.interceptors.response.use(
     async (error: AxiosError) => {
         const requestUrl = error.config?.url || '';
         
-        // Handle 401 Unauthorized
+        // Handle 401 Unauthorized — try refresh token first
         if (error.response?.status === 401) {
-            // Don't redirect if it's a login attempt - let the login page handle the error
-            if (!requestUrl.includes('/auth/login') && !requestUrl.includes('/auth/register')) {
-                useAuthStore.getState().logout();
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
+            const isAuthEndpoint = requestUrl.includes('/auth/login') || 
+                requestUrl.includes('/auth/register') ||
+                requestUrl.includes('/auth/refresh');
+
+            if (!isAuthEndpoint) {
+                const { refreshToken, setAuth, logout, user, role } = useAuthStore.getState();
+
+                if (refreshToken) {
+                    try {
+                        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+                        const { accessToken, refreshToken: newRefreshToken } = res.data?.data ?? res.data;
+                        // Update store with new tokens
+                        if (user) {
+                            setAuth(user, accessToken, role || 'USER', newRefreshToken);
+                        }
+                        // Retry the original request with new access token
+                        if (error.config) {
+                            error.config.headers['Authorization'] = `Bearer ${accessToken}`;
+                            return axios(error.config);
+                        }
+                    } catch {
+                        // Refresh failed — force logout
+                        logout();
+                        if (typeof window !== 'undefined') window.location.href = '/login';
+                    }
+                } else {
+                    logout();
+                    if (typeof window !== 'undefined') window.location.href = '/login';
                 }
             }
         }

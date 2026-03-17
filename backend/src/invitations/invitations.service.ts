@@ -331,7 +331,6 @@ export class InvitationsService {
       // Set as active workspace and mark onboarding as complete (BOTH fields)
       user.activeWorkspaceId = invitation.workspaceId;
       user.pendingInviteToken = null;
-      user.onboardingComplete = true;
       user.onboardingCompleted = true;
       await manager.save(User, user);
 

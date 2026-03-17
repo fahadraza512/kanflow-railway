@@ -53,8 +53,8 @@ class AuthService {
     async logout(): Promise<void> {
         try {
             await apiClient.post(`${this.endpoint}/logout`);
-        } catch (error) {
-            throw handleApiError(error);
+        } catch {
+            // Ignore errors — local logout still happens
         }
     }
 
