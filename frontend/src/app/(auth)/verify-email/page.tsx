@@ -438,7 +438,7 @@ export default function VerifyEmailPage() {
                         ) : (
                             <>
                                 <RefreshCcw className="w-4 h-4" />
-                                {hasEverSentEmail && state !== 'FIRST_VISIT' ? 'Resend Verification Email' : 'Send Verification Email'}
+                                {state === 'CAN_RESEND' ? 'Resend Verification Email' : 'Send Verification Email'}
                             </>
                         )}
                     </button>
