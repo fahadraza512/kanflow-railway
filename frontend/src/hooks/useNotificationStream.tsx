@@ -21,7 +21,9 @@ export function useNotificationStream() {
 
   // Reconnecting indicator state — exposed via a custom event so any component can read it
   const setReconnecting = (value: boolean) => {
-    window.dispatchEvent(new CustomEvent('notification-stream-status', { detail: { reconnecting: value } }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('notification-stream-status', { detail: { reconnecting: value } }));
+    }
   };
 
   const playNotificationSound = () => {
@@ -33,7 +35,7 @@ export function useNotificationStream() {
   };
 
   const showBrowserNotification = (data: Notification & { workspaceName?: string }) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       const workspaceName = data.workspaceName || (data.metadata as any)?.workspaceName;
       const title = workspaceName
         ? `[${workspaceName}] ${data.title || 'New Notification'}`
@@ -179,7 +181,7 @@ export function useNotificationStream() {
 
   // Request browser notification permission on mount
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);
