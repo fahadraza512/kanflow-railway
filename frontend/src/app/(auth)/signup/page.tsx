@@ -134,7 +134,15 @@ export default function SignUpPage() {
         }
 
         registerMutation.mutate({ data: formData as any, inviteToken: inviteToken || undefined }, {
-            onSuccess: (response) => {
+            onSuccess: (response: any) => {
+                // Invite signups are auto-verified — skip email verification entirely
+                if (response.autoVerified) {
+                    showToast.success("Account created! You can now log in.");
+                    const loginUrl = `/login${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
+                    router.push(loginUrl);
+                    return;
+                }
+
                 showToast.success("Account created! Click 'Send Verification Email' to continue.");
                 // Store registration data so resend can recreate the user if cleanup deleted them
                 sessionStorage.setItem('pendingRegistration', JSON.stringify({

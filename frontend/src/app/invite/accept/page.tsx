@@ -8,6 +8,38 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
+import { isWebView, openInBrowser } from '@/utils/webview-detector';
+
+function WebViewWarning({ currentUrl }: { currentUrl: string }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+        <div className="text-4xl mb-3">🌐</div>
+        <h2 className="text-lg font-bold text-gray-900 mb-2">Open in your browser</h2>
+        <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+          You're viewing this in your email app's built-in browser. To sign up and verify your email, you need to open this in Chrome, Safari, or your default browser.
+        </p>
+        <button
+          onClick={() => openInBrowser(currentUrl)}
+          className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold text-sm mb-3 hover:bg-blue-700 transition-colors"
+        >
+          Open in Browser
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          className="w-full py-2 px-4 text-gray-500 text-sm hover:text-gray-700 transition-colors"
+        >
+          Continue anyway
+        </button>
+        <p className="text-xs text-gray-400 mt-3">
+          Tip: tap ⋮ or the share icon in your email app and choose "Open in browser"
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function InviteAcceptContent() {
   const router = useRouter();
@@ -22,6 +54,14 @@ function InviteAcceptContent() {
   const [declining, setDeclining] = useState(false);
   const [declined, setDeclined] = useState(false);
   const [hasValidated, setHasValidated] = useState(false);
+  const [showWebViewWarning, setShowWebViewWarning] = useState(false);
+
+  // Detect WebView on mount
+  useEffect(() => {
+    if (isWebView()) {
+      setShowWebViewWarning(true);
+    }
+  }, []);
 
   useEffect(() => {
     // Only run validation once
@@ -180,7 +220,6 @@ function InviteAcceptContent() {
       </div>
     );
   }
-
   if (error) {
     const isExpiredOrInvalid = error.includes('expired') || error.includes('Invalid') || error.includes('cancelled') || error.includes('no longer exists');
     return (
@@ -244,6 +283,9 @@ function InviteAcceptContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      {showWebViewWarning && (
+        <WebViewWarning currentUrl={typeof window !== 'undefined' ? window.location.href : ''} />
+      )}
       <Card className="max-w-md w-full p-8">
         <div className="text-center mb-6">
           <div className="text-4xl mb-4">🎉</div>

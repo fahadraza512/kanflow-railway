@@ -75,6 +75,30 @@ export class AuthService {
         } else {
           // Recent unverified account - update it with new data
           const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
+          // If re-registering with an invite token, auto-verify
+          if (inviteToken) {
+            existingUser.firstName = registerDto.firstName;
+            existingUser.lastName = registerDto.lastName;
+            existingUser.password = hashedPassword;
+            existingUser.verificationToken = null as any;
+            existingUser.verificationTokenExpires = null as any;
+            existingUser.emailVerified = true;
+            existingUser.pendingInviteToken = inviteToken;
+            await this.userRepository.save(existingUser);
+            return {
+              message: 'Registration successful. Your email has been verified automatically via your invitation. You can now log in.',
+              user: {
+                id: existingUser.id,
+                email: existingUser.email,
+                firstName: existingUser.firstName,
+                lastName: existingUser.lastName,
+              },
+              emailSent: false,
+              autoVerified: true,
+            };
+          }
+
           const verificationToken = uuidv4();
           const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
 
@@ -127,11 +151,16 @@ export class AuthService {
     const verificationToken = uuidv4();
     const verificationTokenExpires = new Date(Date.now() + 60000); // 1 minute
 
+    // If registering via an invite link, auto-verify the email.
+    // The user already proved they own this inbox by receiving the invite there.
+    const isInviteRegistration = !!inviteToken;
+
     const user = this.userRepository.create({
       ...registerDto,
       password: hashedPassword,
-      verificationToken,
-      verificationTokenExpires,
+      verificationToken: isInviteRegistration ? null : verificationToken,
+      verificationTokenExpires: isInviteRegistration ? null : verificationTokenExpires,
+      emailVerified: isInviteRegistration, // auto-verify for invite signups
       provider: 'local',
       pendingInviteToken: inviteToken || null,
     });
@@ -142,7 +171,23 @@ export class AuthService {
     console.log('=== USER REGISTRATION ===');
     console.log('Email:', user.email);
     console.log('Pending Invite Token:', user.pendingInviteToken || 'NONE');
+    console.log('Auto-verified (invite signup):', isInviteRegistration);
     console.log('========================');
+
+    if (isInviteRegistration) {
+      // Invite signup: email is auto-verified, redirect straight to login
+      return {
+        message: 'Registration successful. Your email has been verified automatically via your invitation. You can now log in.',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        emailSent: false,
+        autoVerified: true,
+      };
+    }
 
     // DO NOT send verification email automatically
     // User must click "Resend Verification Email" button
