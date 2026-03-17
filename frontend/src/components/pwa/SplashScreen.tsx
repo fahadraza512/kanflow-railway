@@ -3,52 +3,45 @@
 import { useEffect, useState } from 'react';
 
 export default function SplashScreen() {
-    const [show, setShow] = useState(true);
+    const [visible, setVisible] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => setShow(false), 2000);
+        const timer = setTimeout(() => setVisible(false), 2200);
         return () => clearTimeout(timer);
     }, []);
 
-    if (!show) return null;
+    if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center splash-screen">
-            {/* Animated background blobs */}
-            <div className="absolute inset-0 overflow-hidden opacity-30">
-                <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl animate-blob"></div>
-                <div className="absolute top-40 right-20 w-72 h-72 bg-blue-300 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-                <div className="absolute -bottom-20 left-40 w-72 h-72 bg-indigo-300 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10 text-center">
-                {/* Logo */}
-                <div className="mb-8 animate-scale-bounce">
-                    <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-white/40 rounded-3xl blur-2xl animate-pulse-glow"></div>
-                        <div className="relative w-28 h-28 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                            <span className="text-6xl font-black text-white">K</span>
-                        </div>
-                    </div>
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                background: 'linear-gradient(135deg, #2563eb 0%, #4338ca 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                transition: 'opacity 0.4s ease-out',
+            }}
+        >
+            <div style={{ textAlign: 'center' }}>
+                <div style={{
+                    width: 112,
+                    height: 112,
+                    background: '#1d4ed8',
+                    borderRadius: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 32px',
+                    boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+                }}>
+                    <span style={{ fontSize: 64, fontWeight: 900, color: 'white', fontFamily: 'Arial Black, Arial, sans-serif', lineHeight: 1 }}>K</span>
                 </div>
-
-                {/* Text */}
-                <div className="animate-fade-in-up">
-                    <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
-                        KanbanFlow
-                    </h1>
-                    <p className="text-blue-100 text-base font-medium">
-                        Visual Project Management
-                    </p>
-                </div>
-
-                {/* Loading dots */}
-                <div className="flex justify-center gap-2 mt-12 animate-fade-in-up animation-delay-300">
-                    <div className="w-3 h-3 bg-white rounded-full animate-bounce-smooth"></div>
-                    <div className="w-3 h-3 bg-white rounded-full animate-bounce-smooth animation-delay-150"></div>
-                    <div className="w-3 h-3 bg-white rounded-full animate-bounce-smooth animation-delay-300"></div>
-                </div>
+                <h1 style={{ fontSize: 40, fontWeight: 900, color: 'white', margin: '0 0 8px', fontFamily: 'Arial Black, Arial, sans-serif', letterSpacing: -1 }}>KanbanFlow</h1>
+                <p style={{ color: 'rgba(219,234,254,0.9)', fontSize: 16, margin: 0, fontFamily: 'Arial, sans-serif' }}>Visual Project Management</p>
             </div>
         </div>
     );
