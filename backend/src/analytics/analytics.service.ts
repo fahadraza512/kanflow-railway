@@ -232,10 +232,13 @@ export class AnalyticsService {
       .groupBy('task.listId')
       .getRawMany();
 
-    // Resolve list names
+    // Resolve list names with board and project context
     const listIds = tasksByColumn.map(r => r.listId).filter(Boolean);
     const lists = listIds.length > 0
-      ? await this.listRepository.findBy({ id: In(listIds) })
+      ? await this.listRepository.find({
+          where: { id: In(listIds) },
+          relations: ['board', 'board.project'],
+        })
       : [];
 
     const byColumn = tasksByColumn.map(row => {
@@ -245,8 +248,17 @@ export class AnalyticsService {
         name: list?.name || 'Unknown',
         count: parseInt(row.count) || 0,
         position: list?.position ?? 999,
+        boardId: list?.boardId || null,
+        boardName: list?.board?.name || 'Unknown Board',
+        projectId: list?.board?.projectId || null,
+        projectName: list?.board?.project?.name || 'Unknown Project',
       };
-    }).sort((a, b) => a.position - b.position);
+    }).sort((a, b) => {
+      // Sort by project name, then board name, then column position
+      if (a.projectName !== b.projectName) return a.projectName.localeCompare(b.projectName);
+      if (a.boardName !== b.boardName) return a.boardName.localeCompare(b.boardName);
+      return a.position - b.position;
+    });
 
     return {
       projects: {
