@@ -11,31 +11,18 @@ export const notificationService = {
      * Get ALL notifications for the current user across all workspaces
      */
     getNotifications: async (workspaceId?: string | null): Promise<Notification[]> => {
-        try {
-            // Always fetch globally — no workspace filter
-            const response = await apiClient.get<{ data: Notification[]; success: boolean }>('/notifications');
-            const notifications = response.data?.data ?? response.data;
-            return Array.isArray(notifications) ? notifications : [];
-        } catch (error: any) {
-            if (error.response?.status === 404) return [];
-            console.error('Error fetching notifications:', error);
-            return [];
-        }
+        const response = await apiClient.get<{ data: Notification[]; success: boolean }>('/notifications');
+        const notifications = response.data?.data ?? response.data;
+        return Array.isArray(notifications) ? notifications : [];
     },
 
     /**
      * Get global unread count across ALL workspaces
      */
     getUnreadCount: async (workspaceId?: string | null): Promise<number> => {
-        try {
-            // Always fetch globally — no workspace filter
-            const response = await apiClient.get<{ data: { count: number }; success: boolean }>('/notifications/unread-count');
-            const count = response.data?.data?.count ?? (response.data as any)?.count ?? 0;
-            return typeof count === 'number' ? count : 0;
-        } catch (error: any) {
-            if (error.response?.status === 404) return 0;
-            return 0;
-        }
+        const response = await apiClient.get<{ data: { count: number }; success: boolean }>('/notifications/unread-count');
+        const count = response.data?.data?.count ?? (response.data as any)?.count ?? 0;
+        return typeof count === 'number' ? count : 0;
     },
 
     /**

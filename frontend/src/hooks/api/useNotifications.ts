@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '@/services/api/notification.service';
 import { Notification } from '@/types/api.types';
+import { useAuthStore } from '@/store/useAuthStore';
 
 /**
  * Query keys for notifications — all global (user-level, no workspace scoping)
@@ -15,10 +16,12 @@ export const notificationKeys = {
  * Hook to fetch ALL notifications for the current user across all workspaces
  */
 export function useNotifications(workspaceId?: string | null) {
+    const token = useAuthStore(s => s.token);
     return useQuery({
         queryKey: notificationKeys.list(),
-        queryFn: () => notificationService.getNotifications(), // no workspace filter
-        enabled: true,
+        queryFn: () => notificationService.getNotifications(),
+        enabled: !!token,
+        staleTime: 0,
     });
 }
 
@@ -26,14 +29,15 @@ export function useNotifications(workspaceId?: string | null) {
  * Hook to fetch global unread notifications count across ALL workspaces
  */
 export function useUnreadNotificationsCount(workspaceId?: string | null) {
+    const token = useAuthStore(s => s.token);
     return useQuery({
         queryKey: notificationKeys.unreadCount(),
         queryFn: async () => {
-            const count = await notificationService.getUnreadCount(); // no workspace filter
+            const count = await notificationService.getUnreadCount();
             return count;
         },
         refetchInterval: 30000,
-        enabled: true,
+        enabled: !!token,
         retry: 3,
         retryDelay: 1000,
     });

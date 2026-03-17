@@ -112,7 +112,9 @@ export function useNotificationStream() {
           eventSourceRef.current.close();
         }
 
-        const url = `/api/v1/notifications/stream?token=${token}`;
+        // SSE must connect directly to the backend — Next.js rewrites buffer SSE responses.
+        const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005').replace(/\/api\/v1\/?$/, '');
+        const url = `${backendUrl}/api/v1/notifications/stream?token=${token}`;
         const eventSource = new EventSource(url);
         eventSourceRef.current = eventSource;
 
