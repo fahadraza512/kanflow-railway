@@ -30,6 +30,8 @@ import {
 interface NotificationItemProps {
   notification: Notification;
   onClose: () => void;
+  workspaceName?: string;
+  showWorkspace?: boolean;
 }
 
 const notificationIcons: Record<string, React.ReactNode> = {
@@ -112,7 +114,7 @@ const notificationColors: Record<string, string> = {
   comment: "bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600",
 };
 
-export function NotificationItem({ notification, onClose }: NotificationItemProps) {
+export function NotificationItem({ notification, onClose, workspaceName, showWorkspace }: NotificationItemProps) {
   const { markAsRead } = useNotifications();
   const deleteNotificationMutation = useDeleteNotification();
   const router = useRouter();
@@ -229,6 +231,11 @@ export function NotificationItem({ notification, onClose }: NotificationItemProp
         
         {/* Content */}
         <div className="flex-1 min-w-0">
+          {showWorkspace && workspaceName && (
+            <p className="text-[9px] font-semibold text-blue-500 uppercase tracking-wide mb-0.5 truncate">
+              {workspaceName}
+            </p>
+          )}
           <p className={`text-xs line-clamp-2 leading-tight ${!notification.isRead ? 'text-gray-900 font-medium' : 'text-gray-700'}`}>
             {notification.message}
           </p>

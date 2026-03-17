@@ -8,64 +8,32 @@ import { Notification } from '@/types/api.types';
 
 export const notificationService = {
     /**
-     * Get all notifications for the current user in a specific workspace
+     * Get ALL notifications for the current user across all workspaces
      */
     getNotifications: async (workspaceId?: string | null): Promise<Notification[]> => {
         try {
-            if (workspaceId) {
-                const response = await apiClient.get<{ data: Notification[]; success: boolean }>(`/notifications?workspaceId=${workspaceId}`);
-                // Backend returns { data: [...], success: true }
-                const notifications = response.data?.data ?? response.data;
-                return Array.isArray(notifications) ? notifications : [];
-            }
+            // Always fetch globally — no workspace filter
             const response = await apiClient.get<{ data: Notification[]; success: boolean }>('/notifications');
-            // Backend returns { data: [...], success: true }
             const notifications = response.data?.data ?? response.data;
             return Array.isArray(notifications) ? notifications : [];
         } catch (error: any) {
-            // Gracefully handle 404 errors (endpoint not implemented yet)
-            if (error.response?.status === 404) {
-                console.log('Notifications endpoint not found, returning empty array');
-                return [];
-            }
+            if (error.response?.status === 404) return [];
             console.error('Error fetching notifications:', error);
             return [];
         }
     },
 
     /**
-     * Get unread notifications count for a specific workspace
+     * Get global unread count across ALL workspaces
      */
     getUnreadCount: async (workspaceId?: string | null): Promise<number> => {
         try {
-            console.log('[NotificationService] Fetching unread count for workspace:', workspaceId);
-            if (workspaceId) {
-                const response = await apiClient.get<{ data: { count: number }; success: boolean }>(`/notifications/unread-count?workspaceId=${workspaceId}`);
-                console.log('[NotificationService] Unread count response:', response.data);
-                // Backend returns { data: { count: X }, success: true }
-                const count = response.data?.data?.count ?? response.data?.count ?? 0;
-                return typeof count === 'number' ? count : 0;
-            }
+            // Always fetch globally — no workspace filter
             const response = await apiClient.get<{ data: { count: number }; success: boolean }>('/notifications/unread-count');
-            console.log('[NotificationService] Unread count response (no workspace):', response.data);
-            // Backend returns { data: { count: X }, success: true }
-            const count = response.data?.data?.count ?? response.data?.count ?? 0;
+            const count = response.data?.data?.count ?? (response.data as any)?.count ?? 0;
             return typeof count === 'number' ? count : 0;
         } catch (error: any) {
-            console.error('[NotificationService] Error fetching unread count:', {
-                status: error.response?.status,
-                message: error.message,
-                url: error.config?.url,
-                workspaceId,
-            });
-            
-            // Gracefully handle 404 errors (endpoint not implemented yet)
-            if (error.response?.status === 404) {
-                console.warn('[NotificationService] Unread count endpoint not found (404)');
-                return 0;
-            }
-            
-            // For other errors, still return 0 but log them
+            if (error.response?.status === 404) return 0;
             return 0;
         }
     },
@@ -86,35 +54,25 @@ export const notificationService = {
     },
 
     /**
-     * Mark all notifications as read for a workspace
+     * Mark all notifications as read (global — all workspaces)
      */
     markAllAsRead: async (workspaceId?: string | null): Promise<void> => {
         try {
-            // Backend endpoint is POST /notifications/mark-all-read
             await apiClient.post('/notifications/mark-all-read');
         } catch (error: any) {
-            // Gracefully handle 404 errors (endpoint not implemented yet)
-            if (error.response?.status === 404) {
-                return;
-            }
+            if (error.response?.status === 404) return;
             throw error;
         }
     },
 
     /**
-     * Clear all notifications for a workspace
+     * Clear all notifications (global — all workspaces)
      */
     clearAll: async (workspaceId?: string | null): Promise<void> => {
         try {
-            const url = workspaceId 
-                ? `/notifications/clear-all?workspaceId=${workspaceId}`
-                : '/notifications/clear-all';
-            await apiClient.delete(url);
+            await apiClient.delete('/notifications/clear-all');
         } catch (error: any) {
-            // Gracefully handle 404 errors (endpoint not implemented yet)
-            if (error.response?.status === 404) {
-                return;
-            }
+            if (error.response?.status === 404) return;
             throw error;
         }
     },

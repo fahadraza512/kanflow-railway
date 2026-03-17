@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { Bell } from "lucide-react";
-import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { useUnreadNotificationsCount } from "@/hooks/api";
 import { useNotificationStream } from "@/hooks/useNotificationStream";
 import { NotificationPanel } from "./NotificationPanel";
 
 function NotificationBell() {
-  const { activeWorkspace } = useWorkspaceStore();
   const [isOpen, setIsOpen] = useState(false);
-  const { data: unreadCountData } = useUnreadNotificationsCount(activeWorkspace?.id || null);
+  // Global count — no workspace filter
+  const { data: unreadCountData } = useUnreadNotificationsCount();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
