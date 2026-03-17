@@ -24,7 +24,8 @@ import ListColumn from "@/components/board/ListColumn";
 import TaskCard from "@/components/board/TaskCard";
 import EmptyBoardState from "@/components/board/EmptyBoardState";
 import { useUpdateTask } from "@/hooks/api/useTasks";
-import { useReorderLists } from "@/hooks/api/useLists";
+import { useReorderLists, useCreateList } from "@/hooks/api/useLists";
+import { Plus } from "lucide-react";
 
 // Helper function to map list name to task status
 function getStatusFromListName(listName: string): string {
@@ -58,10 +59,13 @@ export default function BoardView({
 }: BoardViewProps) {
     const [activeTask, setActiveTask] = useState<Task | null>(null);
     const [activeList, setActiveList] = useState<List | null>(null);
+    const [isAddingColumn, setIsAddingColumn] = useState(false);
+    const [newColumnName, setNewColumnName] = useState("");
 
     // API mutations
     const updateTaskMutation = useUpdateTask();
     const reorderListsMutation = useReorderLists();
+    const createListMutation = useCreateList();
 
     const sensors = useSensors(
         useSensor(MouseSensor, {
@@ -81,6 +85,21 @@ export default function BoardView({
     );
 
     const activeSensors = readOnly ? [] : sensors;
+
+    const handleAddColumn = async () => {
+        const name = newColumnName.trim();
+        if (!name) { setIsAddingColumn(false); return; }
+        const boardId = lists[0]?.boardId?.toString();
+        if (!boardId) return;
+        try {
+            await createListMutation.mutateAsync({ boardId, name });
+            setNewColumnName("");
+            setIsAddingColumn(false);
+            onTaskUpdate();
+        } catch {
+            // error toast handled by hook
+        }
+    };
 
     const onDragStart = (event: DragStartEvent) => {
         if (event.active.data.current?.type === "List") {
@@ -287,6 +306,51 @@ export default function BoardView({
                             </div>
                         ))}
                     </SortableContext>
+
+                    {/* Add Column button — only in normal (non-grouped) mode */}
+                    {!readOnly && groupBy === 'none' && (
+                        <div className="flex-shrink-0 w-[260px] pt-1">
+                            {isAddingColumn ? (
+                                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Column name..."
+                                        value={newColumnName}
+                                        onChange={e => setNewColumnName(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter") { e.preventDefault(); handleAddColumn(); }
+                                            if (e.key === "Escape") { setIsAddingColumn(false); setNewColumnName(""); }
+                                        }}
+                                        className="w-full text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none mb-2"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleAddColumn}
+                                            disabled={createListMutation.isPending}
+                                            className="flex-1 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            {createListMutation.isPending ? "Adding..." : "Add column"}
+                                        </button>
+                                        <button
+                                            onClick={() => { setIsAddingColumn(false); setNewColumnName(""); }}
+                                            className="flex-1 py-1.5 text-xs font-semibold bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsAddingColumn(true)}
+                                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 text-sm font-semibold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add column
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 

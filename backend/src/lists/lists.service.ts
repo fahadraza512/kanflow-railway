@@ -75,6 +75,8 @@ export class ListsService {
 
   async remove(id: string): Promise<void> {
     const list = await this.findOne(id);
+    // Delete all tasks in this list first to avoid FK constraint issues
+    await this.listRepository.manager.delete('tasks', { listId: id });
     await this.listRepository.remove(list);
   }
 
