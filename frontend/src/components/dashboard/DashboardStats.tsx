@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { Folder, Layout, CheckCircle2, Clock, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,40 @@ interface DashboardStatsProps {
     totalBoards: number;
     totalTasks: number;
     inProgressTasks: number;
+}
+
+/** Animates a number value: exit old → enter new */
+function AnimatedStatValue({ value }: { value: number }) {
+    const [displayValue, setDisplayValue] = useState(value);
+    const [phase, setPhase] = useState<'idle' | 'exit' | 'enter'>('idle');
+    const prevRef = useRef(value);
+
+    useEffect(() => {
+        if (value === prevRef.current) return;
+        prevRef.current = value;
+
+        setPhase('exit');
+        const t1 = setTimeout(() => {
+            setDisplayValue(value);
+            setPhase('enter');
+            const t2 = setTimeout(() => setPhase('idle'), 300);
+            return () => clearTimeout(t2);
+        }, 200);
+        return () => clearTimeout(t1);
+    }, [value]);
+
+    return (
+        <span
+            className={cn(
+                "text-lg font-bold text-gray-900 mb-0.5 block",
+                phase === 'exit' && "opacity-0 -translate-y-2 transition-all duration-200",
+                phase === 'enter' && "animate-count-up",
+                phase === 'idle' && "opacity-100 translate-y-0"
+            )}
+        >
+            {displayValue}
+        </span>
+    );
 }
 
 export default function DashboardStats({
@@ -46,9 +81,7 @@ export default function DashboardStats({
                             <stat.icon className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="text-lg font-bold text-gray-900 mb-0.5">
-                        {stat.value}
-                    </div>
+                    <AnimatedStatValue value={stat.value} />
                     <div className="text-xs text-gray-500 font-medium">
                         {stat.label}
                     </div>

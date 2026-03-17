@@ -115,6 +115,31 @@ body {
     }
   }
 
+  /* Badge number transition animations */
+  @keyframes badgeExit {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-6px) scale(0.7); }
+  }
+  @keyframes badgeEnter {
+    from { opacity: 0; transform: translateY(6px) scale(0.7); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-badge-exit {
+    animation: badgeExit 150ms ease-in forwards;
+  }
+  .animate-badge-enter {
+    animation: badgeEnter 150ms ease-out forwards;
+  }
+
+  /* Stat counter roll-up animation */
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-count-up {
+    animation: countUp 300ms ease-out forwards;
+  }
+
   /* PWA Page Load Animations */
   .animate-fade-in-up {
     animation: fadeInUp 0.8s ease-out forwards;
