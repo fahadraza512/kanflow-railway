@@ -8,7 +8,6 @@ import RealtimeNotificationsProvider from "@/components/providers/RealtimeNotifi
 import AuthGuard from "@/components/auth/AuthGuard";
 import TokenValidator from "@/components/auth/TokenValidator";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
-import SplashScreen from "@/components/pwa/SplashScreen";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import ConsoleFilterScript from "@/components/ConsoleFilterScript";
 
@@ -72,7 +71,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <SplashScreen />
         <ErrorBoundary>
           <HydrationProvider>
             <QueryProvider>
